@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>테마 관리 - Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #f59e0b;
+            --primary-hover: #d97706;
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+            --bg-dark: #09090b;
+            --bg-card: rgba(255, 255, 255, 0.03);
+            --border-glass: rgba(255, 255, 255, 0.1);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Outfit', -apple-system, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+
+        .nav-header {
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-glass);
+            background: rgba(9,9,11,0.8);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-header a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: color 0.2s;
+        }
+
+        .nav-header a:hover { color: white; }
+
+        .nav-links { display: flex; gap: 1.5rem; }
+        .nav-links a.active { color: var(--primary); }
+
+        .container {
+            max-width: 900px;
+            margin: 3rem auto;
+            padding: 0 2rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 900;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            margin-bottom: 3rem;
+            font-size: 1.1rem;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        h2 {
+            font-size: 1.3rem;
+            margin-bottom: 1.5rem;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        h2::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 1.3rem;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group.full-width { grid-column: 1 / -1; }
+
+        label {
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        input[type="text"], input[type="url"], textarea {
+            width: 100%;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-glass);
+            border-radius: 12px;
+            font-size: 1rem;
+            color: white;
+            outline: none;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        textarea { resize: vertical; min-height: 100px; }
+
+        input:focus, textarea:focus {
+            border-color: var(--primary);
+            background: rgba(0, 0, 0, 0.5);
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
+        }
+
+        button.btn-primary {
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+            color: var(--bg-dark);
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 900;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 10px 20px rgba(245, 158, 11, 0.3);
+            font-family: inherit;
+            text-transform: uppercase;
+        }
+
+        button.btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 25px rgba(245, 158, 11, 0.5);
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        th {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 800;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.05em;
+        }
+
+        th:first-child { border-top-left-radius: 12px; border-bottom-left-radius: 12px; }
+        th:last-child { border-top-right-radius: 12px; border-bottom-right-radius: 12px; }
+
+        td {
+            padding: 1.2rem 1rem;
+            border-bottom: 1px solid var(--border-glass);
+            color: white;
+            vertical-align: middle;
+        }
+
+        .theme-img {
+            width: 80px;
+            height: 60px;
+            border-radius: 8px;
+            object-fit: cover;
+            border: 1px solid var(--border-glass);
+            background: #111;
+        }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            box-shadow: none;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn-danger:hover {
+            background: var(--danger);
+            color: white;
+            box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-header">
+        <a href="/">&larr; 메인</a>
+        <div class="nav-links">
+            <a href="/admin-reservation.html">예약 현황</a>
+            <a href="/admin-time.html">시간 관리</a>
+            <a href="/admin-theme.html" class="active">테마 관리</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1>THEME MANAGEMENT</h1>
+        <p class="subtitle">방탈출 테마를 추가하고 관리하세요.</p>
+
+        <div class="card">
+            <h2>새 테마 추가</h2>
+            <form id="themeForm" class="form-grid">
+                <div class="form-group">
+                    <label>테마 이름</label>
+                    <input type="text" id="nameInput" placeholder="테마 이름 입력" required>
+                </div>
+                <div class="form-group">
+                    <label>썸네일 이미지 URL</label>
+                    <input type="url" id="imageInput" placeholder="https://..." required>
+                </div>
+                <div class="form-group full-width">
+                    <label>테마 설명</label>
+                    <textarea id="descInput" placeholder="테마에 대한 상세한 설명을 입력하세요." required></textarea>
+                </div>
+                <div class="form-group full-width">
+                    <button type="submit" class="btn-primary">테마 저장하기</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>등록된 테마 목록</h2>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 100px;">이미지</th>
+                            <th>테마 이름</th>
+                            <th>설명</th>
+                            <th style="width: 100px;">작업</th>
+                        </tr>
+                    </thead>
+                    <tbody id="themeList">
+                        <!-- Themes will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+<script type="module">
+    import { fetchThemes, createTheme, deleteTheme as apiDeleteTheme } from '/js/api.js';
+    import { showToast } from '/js/utils.js';
+
+    const themeForm = document.getElementById('themeForm');
+    const themeList = document.getElementById('themeList');
+
+    window.deleteTheme = async (id) => {
+        if (!confirm('정말로 이 테마를 삭제하시겠습니까?\n해당 테마와 연관된 예약이 있을 경우 삭제되지 않을 수 있습니다.')) return;
+        try {
+            await apiDeleteTheme(id);
+            showToast('테마가 삭제되었습니다.', 'success');
+            loadThemes();
+        } catch (e) {
+            showToast('삭제에 실패했습니다. 사용 중인 테마일 수 있습니다.', 'error');
+        }
+    };
+
+    async function loadThemes() {
+        try {
+            const themes = await fetchThemes();
+            themeList.innerHTML = '';
+
+            if (themes.length === 0) {
+                themeList.innerHTML = '<tr><td colspan="4" class="empty-state">등록된 테마가 없습니다.</td></tr>';
+                return;
+            }
+
+            themes.forEach(t => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                        <td><img src="${t.imagePath}" alt="${t.name}" class="theme-img" onerror="this.src='https://placehold.co/100x100?text=No+Img'"></td>
+                        <td style="font-weight: bold; font-size: 1.1rem;">${t.name}</td>
+                        <td style="color: var(--text-muted); font-size: 0.95rem;">${t.description}</td>
+                        <td><button class="btn-danger" onclick="deleteTheme(${t.id})">삭제</button></td>
+                    `;
+                themeList.appendChild(tr);
+            });
+        } catch (e) {
+            console.error('테마 목록 로드 실패', e);
+            showToast('테마 목록 로드 실패', 'error');
+        }
+    }
+
+    themeForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const payload = {
+            name: document.getElementById('nameInput').value,
+            description: document.getElementById('descInput').value,
+            imagePath: document.getElementById('imageInput').value
+        };
+        try {
+            await createTheme(payload);
+            showToast('새 테마가 등록되었습니다.', 'success');
+            themeForm.reset();
+            loadThemes();
+        } catch (e) {
+            showToast('테마 추가에 실패했습니다.', 'error');
+        }
+    });
+
+    loadThemes();
+</script>
+</body>
+</html>

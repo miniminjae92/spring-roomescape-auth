@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>방탈출 예약하기</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #f59e0b;
+            --primary-hover: #d97706;
+            --bg-dark: #09090b;
+            --bg-card: rgba(255, 255, 255, 0.03);
+            --border-glass: rgba(255, 255, 255, 0.1);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', -apple-system, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-image: radial-gradient(circle at 15% 50%, rgba(245, 158, 11, 0.05), transparent 25%),
+                              radial-gradient(circle at 85% 30%, rgba(245, 158, 11, 0.05), transparent 25%);
+        }
+
+        .nav-header {
+            padding: 1.5rem 2rem;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--border-glass);
+            background: rgba(9,9,11,0.8);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-header a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: color 0.2s;
+        }
+
+        .nav-header a:hover {
+            color: white;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 3rem auto;
+            padding: 0 2rem;
+            width: 100%;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 900;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            margin-bottom: 3rem;
+        }
+
+        /* Wizard Steps Layout */
+        .step {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: 20px;
+            padding: 2.5rem;
+            margin-bottom: 1.5rem;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .step.disabled {
+            opacity: 0.4;
+            pointer-events: none;
+            filter: grayscale(100%);
+            transform: scale(0.98);
+        }
+
+        .step.active {
+            border-color: rgba(245, 158, 11, 0.4);
+            background: rgba(255, 255, 255, 0.05);
+            box-shadow: 0 20px 40px rgba(245, 158, 11, 0.1);
+            transform: scale(1);
+        }
+
+        .step::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 4px; height: 100%;
+            background: var(--primary);
+            transform: scaleY(0);
+            transition: transform 0.4s ease;
+            transform-origin: top;
+        }
+
+        .step.active::before {
+            transform: scaleY(1);
+        }
+
+        h2 {
+            font-size: 1.4rem;
+            margin-top: 0;
+            color: #fff;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-weight: 800;
+        }
+
+        .step-num {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-muted);
+            width: 32px;
+            height: 32px;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 50%;
+            font-size: 1rem;
+            font-weight: 800;
+            transition: all 0.3s;
+        }
+
+        .step.active .step-num {
+            background: var(--primary);
+            color: var(--bg-dark);
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.5);
+        }
+
+        /* Inputs and Grids */
+        input[type="date"], input[type="text"] {
+            width: 100%;
+            padding: 1.2rem;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-glass);
+            border-radius: 12px;
+            font-size: 1.1rem;
+            color: white;
+            outline: none;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(1) sepia(1) saturate(5) hue-rotate(350deg);
+            opacity: 0.8;
+            cursor: pointer;
+            width: 20px;
+            height: 20px;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+            background: rgba(0, 0, 0, 0.5);
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 1rem;
+        }
+
+        .btn-card {
+            padding: 1.5rem 1rem;
+            border: 1px solid var(--border-glass);
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.02);
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-main);
+            font-family: inherit;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-card:hover:not(:disabled) {
+            border-color: var(--primary);
+            background: rgba(245, 158, 11, 0.1);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .btn-card.selected {
+            background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+            color: var(--bg-dark);
+            border-color: var(--primary);
+            box-shadow: 0 10px 25px rgba(245, 158, 11, 0.4);
+            font-weight: 800;
+        }
+
+        .btn-card:disabled {
+            background: rgba(0, 0, 0, 0.4);
+            color: var(--text-muted);
+            cursor: not-allowed;
+            border-color: transparent;
+            opacity: 0.5;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 1.25rem;
+            background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+            color: var(--bg-dark);
+            border: none;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-weight: 900;
+            cursor: pointer;
+            margin-top: 2rem;
+            transition: all 0.3s;
+            box-shadow: 0 10px 25px rgba(245, 158, 11, 0.4);
+            font-family: inherit;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(245, 158, 11, 0.6);
+        }
+
+        .submit-btn:active {
+            transform: scale(0.98);
+        }
+
+        .loading-msg {
+            color: var(--text-muted);
+            text-align: center;
+            padding: 3rem;
+            grid-column: 1 / -1;
+            font-style: italic;
+            background: rgba(0,0,0,0.2);
+            border-radius: 16px;
+            border: 1px dashed var(--border-glass);
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-header">
+        <a href="/">&larr; 메인으로 돌아가기</a>
+    </div>
+    
+    <div class="container">
+        <h1>RESERVATION</h1>
+        <p class="subtitle">모든 방탈출의 시작, 예약을 진행해주세요.</p>
+
+        <div class="step active" id="step1">
+            <h2><span class="step-num">1</span> 방문하실 날짜를 선택해주세요</h2>
+            <input type="date" id="dateInput">
+        </div>
+
+        <div class="step disabled" id="step2">
+            <h2><span class="step-num">2</span> 도전하실 테마를 선택해주세요</h2>
+            <div class="grid" id="themeList"></div>
+        </div>
+
+        <div class="step disabled" id="step3">
+            <h2><span class="step-num">3</span> 예약 시간을 선택해주세요</h2>
+            <div class="grid" id="timeList"></div>
+        </div>
+
+        <div class="step disabled" id="step4">
+            <h2><span class="step-num">4</span> 예약자 정보를 입력해주세요</h2>
+            <input type="text" id="nameInput" placeholder="예약자 성함 (ex: 홍길동)">
+            <button class="submit-btn" id="reserveBtn">예약 확정하기</button>
+        </div>
+    </div>
+
+<script type="module">
+    import { fetchThemes, fetchAvailableTimes, createReservation } from '/js/api.js';
+    import { showToast } from '/js/utils.js';
+
+    const dateInput = document.getElementById('dateInput');
+    const themeList = document.getElementById('themeList');
+    const timeList = document.getElementById('timeList');
+    const nameInput = document.getElementById('nameInput');
+    const reserveBtn = document.getElementById('reserveBtn');
+    const step2 = document.getElementById('step2');
+    const step3 = document.getElementById('step3');
+    const step4 = document.getElementById('step4');
+
+    let selectedDate = '';
+    let selectedThemeId = null;
+    let selectedTimeId = null;
+
+    // Set min date to today local time
+    const offset = new Date().getTimezoneOffset() * 60000;
+    dateInput.min = new Date(Date.now() - offset).toISOString().split('T')[0];
+
+    dateInput.addEventListener('change', async (e) => {
+        selectedDate = e.target.value;
+        if (selectedDate) {
+            step2.classList.remove('disabled');
+            step2.classList.add('active');
+            step3.classList.add('disabled');
+            step4.classList.add('disabled');
+            selectedThemeId = null;
+            selectedTimeId = null;
+            timeList.innerHTML = '';
+            await loadThemes();
+        }
+    });
+
+    async function loadThemes() {
+        themeList.innerHTML = '<div class="loading-msg">테마 정보를 불러오고 있습니다...</div>';
+        try {
+            const themes = await fetchThemes();
+            themeList.innerHTML = '';
+
+            if (themes.length === 0) {
+                themeList.innerHTML = '<div class="loading-msg">현재 선택 가능한 테마가 없습니다.</div>';
+                return;
+            }
+
+            themes.forEach(theme => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-card';
+                btn.textContent = theme.name;
+                btn.onclick = () => selectTheme(theme.id, btn);
+                themeList.appendChild(btn);
+            });
+        } catch (e) {
+            themeList.innerHTML = '<div class="loading-msg">데이터 로드 중 오류가 발생했습니다.</div>';
+            showToast('테마 로드 실패', 'error');
+        }
+    }
+
+    async function selectTheme(themeId, clickedBtn) {
+        selectedThemeId = themeId;
+        document.querySelectorAll('#themeList .btn-card').forEach(b => b.classList.remove('selected'));
+        clickedBtn.classList.add('selected');
+
+        step3.classList.remove('disabled');
+        step3.classList.add('active');
+        step4.classList.add('disabled');
+        selectedTimeId = null;
+        await loadAvailableTimes();
+    }
+
+    async function loadAvailableTimes() {
+        timeList.innerHTML = '<div class="loading-msg">예약 가능 시간을 확인 중입니다...</div>';
+        try {
+            const availableTimes = await fetchAvailableTimes(selectedThemeId, selectedDate);
+            timeList.innerHTML = '';
+
+            if (!availableTimes || availableTimes.length === 0) {
+                timeList.innerHTML = '<div class="loading-msg">해당 날짜에는 예약 가능한 시간이 없습니다.</div>';
+                return;
+            }
+
+            availableTimes.forEach(time => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-card';
+
+                if (!time.available) {
+                    btn.disabled = true;
+                    btn.innerHTML = `${time.startAt}<br><span style="font-size:0.7rem; font-weight:normal; color:#94a3b8;">예약마감</span>`;
+                } else {
+                    btn.textContent = time.startAt;
+                    btn.onclick = () => selectTime(time.id, btn);
+                }
+                timeList.appendChild(btn);
+            });
+        } catch (e) {
+            timeList.innerHTML = '<div class="loading-msg">시간 정보를 불러올 수 없습니다.</div>';
+            showToast('시간 로드 실패', 'error');
+        }
+    }
+
+    function selectTime(timeId, clickedBtn) {
+        selectedTimeId = timeId;
+        document.querySelectorAll('#timeList .btn-card').forEach(b => b.classList.remove('selected'));
+        clickedBtn.classList.add('selected');
+
+        step4.classList.remove('disabled');
+        step4.classList.add('active');
+        nameInput.focus();
+    }
+
+    reserveBtn.addEventListener('click', async () => {
+        const name = nameInput.value.trim();
+        if (!name) {
+            showToast('예약자 성함을 입력해주세요.', 'error');
+            nameInput.focus();
+            return;
+        }
+
+        const payload = {
+            name: name,
+            date: selectedDate,
+            themeId: selectedThemeId,
+            timeId: selectedTimeId
+        };
+
+        reserveBtn.disabled = true;
+        reserveBtn.textContent = '예약 요청을 보내는 중...';
+
+        try {
+            await createReservation(payload);
+            showToast('🎉 예약이 완료되었습니다! 현장에서 뵙겠습니다.', 'success');
+            setTimeout(() => window.location.href = '/my-reservation.html', 1500);
+        } catch (e) {
+            showToast(e.message || '예약 처리에 실패했습니다.', 'error');
+            loadAvailableTimes();
+        } finally {
+            reserveBtn.disabled = false;
+            reserveBtn.textContent = '지금 바로 예약하기';
+        }
+    });
+</script>
+</body>
+</html>
