@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
+import roomescape.domain.Member;
 import roomescape.domain.Reservation;
 import roomescape.domain.ReservationTime;
 import roomescape.domain.Theme;
@@ -26,6 +27,8 @@ class ReservationRepositoryTest {
     private TestDataInitializer dataInitializer;
 
     private Theme theme;
+    private Member whale;
+    private Member shark;
     private ReservationTime ten;
     private ReservationTime eleven;
     private ReservationTime noon;
@@ -33,6 +36,8 @@ class ReservationRepositoryTest {
     @BeforeEach
     void setUp() {
         theme = dataInitializer.createTheme("테마", "설명", "/images/themes/theme.webp");
+        whale = dataInitializer.createMember("whale", "password", "고래");
+        shark = dataInitializer.createMember("shark", "password", "상어");
         ten = dataInitializer.createReservationTime(LocalTime.of(10, 0));
         eleven = dataInitializer.createReservationTime(LocalTime.of(11, 0));
         noon = dataInitializer.createReservationTime(LocalTime.of(12, 0));
@@ -51,27 +56,37 @@ class ReservationRepositoryTest {
     }
 
     @Test
-    void 이름으로_예약_이력을_페이징_조회한다() {
-        Reservation first = createReservation("고래", ten);
-        createReservation("상어", eleven);
-        Reservation second = createReservation("고래", noon);
+    void 회원으로_예약_이력을_페이징_조회한다() {
+        Reservation first = createReservation(whale, ten);
+        createReservation(shark, eleven);
+        Reservation second = createReservation(whale, noon);
 
-        List<Reservation> reservations = reservationRepository.findAllByName("고래", 1, 1);
+        List<Reservation> reservations = reservationRepository.findAllByMemberId(whale.getId(), 1, 1);
 
         assertThat(reservations).extracting(Reservation::getId)
                 .containsExactly(second.getId());
     }
 
     @Test
-    void 이름에_해당하는_예약이_없으면_빈_목록을_반환한다() {
-        createReservation("고래", ten);
+    void 회원에_해당하는_예약이_없으면_빈_목록을_반환한다() {
+        createReservation(whale, ten);
 
-        List<Reservation> reservations = reservationRepository.findAllByName("상어", 20, 0);
+        List<Reservation> reservations = reservationRepository.findAllByMemberId(shark.getId(), 20, 0);
 
         assertThat(reservations).isEmpty();
     }
 
     private Reservation createReservation(String name, ReservationTime time) {
         return dataInitializer.createReservation(name, LocalDate.of(2026, 5, 20), time.getId(), theme.getId());
+    }
+
+    private Reservation createReservation(Member member, ReservationTime time) {
+        return dataInitializer.createMemberReservation(
+                member.getId(),
+                member.getName(),
+                LocalDate.of(2026, 5, 20),
+                time.getId(),
+                theme.getId()
+        );
     }
 }

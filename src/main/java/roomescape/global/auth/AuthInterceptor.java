@@ -22,9 +22,9 @@ public class AuthInterceptor implements HandlerInterceptor {
         if (!requiresLogin(handlerMethod)) {
             return true;
         }
-        if (sessionManager.findLoginMember(request).isEmpty()) {
-            throw new AuthenticationRequiredException("인증이 필요합니다.");
-        }
+        LoginMember loginMember = sessionManager.findLoginMember(request)
+                .orElseThrow(() -> new AuthenticationRequiredException("인증이 필요합니다."));
+        request.setAttribute(SessionManager.LOGIN_MEMBER_ATTRIBUTE, loginMember);
         return true;
     }
 

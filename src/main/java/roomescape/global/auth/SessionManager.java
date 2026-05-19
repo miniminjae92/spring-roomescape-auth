@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 public class SessionManager {
 
     public static final String SESSION_COOKIE_NAME = "SESSION";
+    public static final String LOGIN_MEMBER_ATTRIBUTE = "loginMember";
 
     private final Map<String, LoginMember> sessions = new ConcurrentHashMap<>();
 

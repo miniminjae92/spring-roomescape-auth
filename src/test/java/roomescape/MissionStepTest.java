@@ -19,6 +19,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.annotation.DirtiesContext;
 import roomescape.controller.ReservationController;
 import roomescape.controller.dto.reservation.ReservationResponse;
+import roomescape.global.auth.SessionManager;
 import roomescape.util.ApiTestSupport;
 import roomescape.util.TestDataInitializer;
 
@@ -84,13 +85,22 @@ class MissionStepTest extends ApiTestSupport {
     void DB_추가_삭제_API_전환() {
         dataInitializer.createReservationTime(LocalTime.now());
         dataInitializer.createTheme("hello", "world", "/images/themes/hello.webp");
+        dataInitializer.createMember("brown", "password", "브라운");
+        String sessionId = RestAssured.given().log().all()
+                .contentType(ContentType.JSON)
+                .body(Map.of("loginId", "brown", "password", "password"))
+                .when().post("/login")
+                .then().log().all()
+                .statusCode(200)
+                .extract().cookie(SessionManager.SESSION_COOKIE_NAME);
+
         Map<String, Object> params = new HashMap<>();
-        params.put("name", "브라운");
         params.put("date", LocalDate.now().plusDays(1).toString());
         params.put("timeId", 1);
         params.put("themeId", 1);
 
         RestAssured.given().log().all()
+                .cookie(SessionManager.SESSION_COOKIE_NAME, sessionId)
                 .contentType(ContentType.JSON)
                 .body(params)
                 .when().post("/reservations")

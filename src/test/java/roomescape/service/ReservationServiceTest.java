@@ -21,6 +21,7 @@ import roomescape.global.exception.reservation.DuplicateReservationException;
 import roomescape.global.exception.reservation.ExpiredReservationCancelException;
 import roomescape.global.exception.reservation.ExpiredReservationChangeException;
 import roomescape.global.exception.reservation.InvalidReservationException;
+import roomescape.global.exception.reservation.ReservationAccessDeniedException;
 import roomescape.global.exception.reservation.ReservationNotFoundException;
 import roomescape.global.exception.reservation.SameReservationScheduleException;
 import roomescape.repository.ReservationRepository;
@@ -60,6 +61,7 @@ class ReservationServiceTest {
         stubReservationDependencies(LocalTime.of(15, 0));
 
         CreateReservationCommand command = new CreateReservationCommand(
+                1L,
                 "고래",
                 LocalDate.of(2026, 5, 14),
                 1L,
@@ -76,6 +78,7 @@ class ReservationServiceTest {
         stubReservationDependencies(LocalTime.of(13, 0));
 
         CreateReservationCommand command = new CreateReservationCommand(
+                1L,
                 "고래",
                 LocalDate.of(2026, 5, 15),
                 1L,
@@ -92,6 +95,7 @@ class ReservationServiceTest {
         stubReservationDependencies(LocalTime.of(15, 0));
 
         CreateReservationCommand command = new CreateReservationCommand(
+                1L,
                 "고래",
                 LocalDate.of(2026, 6, 15),
                 1L,
@@ -110,6 +114,7 @@ class ReservationServiceTest {
                 .thenReturn(List.of(1L));
 
         CreateReservationCommand command = new CreateReservationCommand(
+                1L,
                 "고래",
                 LocalDate.of(2026, 5, 16),
                 1L,
@@ -131,7 +136,7 @@ class ReservationServiceTest {
 
         ChangeReservationScheduleCommand command = new ChangeReservationScheduleCommand(
                 1L,
-                "고래",
+                1L,
                 LocalDate.of(2026, 5, 16),
                 2L
         );
@@ -148,7 +153,7 @@ class ReservationServiceTest {
 
         ChangeReservationScheduleCommand command = new ChangeReservationScheduleCommand(
                 1L,
-                "고래",
+                1L,
                 LocalDate.of(2026, 5, 16),
                 1L
         );
@@ -167,7 +172,7 @@ class ReservationServiceTest {
 
         ChangeReservationScheduleCommand command = new ChangeReservationScheduleCommand(
                 1L,
-                "고래",
+                1L,
                 LocalDate.of(2026, 5, 16),
                 2L
         );
@@ -178,37 +183,37 @@ class ReservationServiceTest {
     }
 
     @Test
-    void 예약자_이름이_일치하지_않으면_예약을_변경할_수_없다() {
+    void 회원이_일치하지_않으면_예약을_변경할_수_없다() {
         when(reservationRepository.findById(1L)).thenReturn(Optional.of(reservation()));
 
         ChangeReservationScheduleCommand command = new ChangeReservationScheduleCommand(
                 1L,
-                "라텔",
+                2L,
                 LocalDate.of(2026, 5, 16),
                 1L
         );
 
         assertThatThrownBy(() -> reservationService.changeReservationSchedule(command))
-                .isInstanceOf(ReservationNotFoundException.class)
-                .hasMessage("해당 예약을 찾을 수 없습니다.");
+                .isInstanceOf(ReservationAccessDeniedException.class)
+                .hasMessage("접근 권한이 없습니다.");
     }
 
     @Test
-    void 예약자_이름이_일치하지_않으면_예약을_취소할_수_없다() {
+    void 회원이_일치하지_않으면_예약을_취소할_수_없다() {
         when(reservationRepository.findById(1L)).thenReturn(Optional.of(reservation()));
 
-        CancelReservationCommand command = new CancelReservationCommand(1L, "라텔");
+        CancelReservationCommand command = new CancelReservationCommand(1L, 2L);
 
         assertThatThrownBy(() -> reservationService.cancelReservation(command))
-                .isInstanceOf(ReservationNotFoundException.class)
-                .hasMessage("해당 예약을 찾을 수 없습니다.");
+                .isInstanceOf(ReservationAccessDeniedException.class)
+                .hasMessage("접근 권한이 없습니다.");
     }
 
     @Test
     void 지난_예약은_취소할_수_없다() {
         when(reservationRepository.findById(1L)).thenReturn(Optional.of(pastReservation()));
 
-        CancelReservationCommand command = new CancelReservationCommand(1L, "고래");
+        CancelReservationCommand command = new CancelReservationCommand(1L, 1L);
 
         assertThatThrownBy(() -> reservationService.cancelReservation(command))
                 .isInstanceOf(ExpiredReservationCancelException.class)
@@ -225,6 +230,7 @@ class ReservationServiceTest {
     private Reservation reservation() {
         return Reservation.from(
                 1L,
+                1L,
                 "고래",
                 LocalDate.of(2026, 5, 16),
                 ReservationTime.from(1L, LocalTime.of(10, 0)),
@@ -235,6 +241,7 @@ class ReservationServiceTest {
 
     private Reservation pastReservation() {
         return Reservation.from(
+                1L,
                 1L,
                 "고래",
                 LocalDate.of(2026, 5, 14),

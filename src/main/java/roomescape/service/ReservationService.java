@@ -17,6 +17,7 @@ import roomescape.domain.Theme;
 import roomescape.global.exception.reservation.ExpiredReservationCancelException;
 import roomescape.global.exception.reservation.ExpiredReservationChangeException;
 import roomescape.global.exception.reservation.InvalidReservationException;
+import roomescape.global.exception.reservation.ReservationAccessDeniedException;
 import roomescape.global.exception.reservation.ReservationNotFoundException;
 import roomescape.global.exception.reservationtime.ReservationTimeNotFoundException;
 import roomescape.global.exception.theme.ThemeNotFoundException;
@@ -44,8 +45,8 @@ public class ReservationService {
                 .toList();
     }
 
-    public List<ReservationResult> getReservationHistoryByName(String name, ReservationPagingCondition condition) {
-        return reservationRepository.findAllByName(name, condition.size(), condition.offset()).stream()
+    public List<ReservationResult> getReservationHistoryByMember(Long memberId, ReservationPagingCondition condition) {
+        return reservationRepository.findAllByMemberId(memberId, condition.size(), condition.offset()).stream()
                 .map(ReservationResult::from)
                 .toList();
     }
@@ -59,6 +60,7 @@ public class ReservationService {
 
         Reservation reservation = reservationRepository.save(
                 Reservation.createNew(
+                        command.memberId(),
                         command.name(),
                         command.date(),
                         time,
@@ -75,7 +77,7 @@ public class ReservationService {
 
     @Transactional
     public ReservationResult changeReservationSchedule(ChangeReservationScheduleCommand command) {
-        Reservation reservation = getReservation(command.reservationId(), command.name());
+        Reservation reservation = getReservation(command.reservationId(), command.memberId());
         validateChangeableReservation(reservation);
         ReservationTime time = getReservationTime(command.timeId());
         validateReservableDateTime(command.date(), time);
@@ -88,7 +90,7 @@ public class ReservationService {
 
     @Transactional
     public ReservationResult cancelReservation(CancelReservationCommand command) {
-        Reservation reservation = getReservation(command.reservationId(), command.name());
+        Reservation reservation = getReservation(command.reservationId(), command.memberId());
         validateCancellableReservation(reservation);
         Reservation cancelledReservation = reservation.cancel();
         return ReservationResult.from(reservationRepository.updateStatus(cancelledReservation));
@@ -112,11 +114,11 @@ public class ReservationService {
     }
 
     @NonNull
-    private Reservation getReservation(Long reservationId, String name) {
+    private Reservation getReservation(Long reservationId, Long memberId) {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new ReservationNotFoundException("해당 예약을 찾을 수 없습니다."));
-        if (!reservation.getName().equals(name)) {
-            throw new ReservationNotFoundException("해당 예약을 찾을 수 없습니다.");
+        if (!reservation.isOwnedBy(memberId)) {
+            throw new ReservationAccessDeniedException("접근 권한이 없습니다.");
         }
         return reservation;
     }

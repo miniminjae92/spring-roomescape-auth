@@ -32,6 +32,7 @@ public class ReservationRepository {
         );
         return Reservation.from(
                 rs.getLong("id"),
+                rs.getObject("member_id", Long.class),
                 rs.getString("name"),
                 rs.getObject("date", LocalDate.class),
                 reservationTime,
@@ -47,7 +48,7 @@ public class ReservationRepository {
         this.jdbcTemplate = jdbcTemplate;
         this.simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate.getJdbcTemplate())
                 .withTableName("reservation")
-                .usingColumns("name", "date", "time_id", "theme_id", "status")
+                .usingColumns("member_id", "name", "date", "time_id", "theme_id", "status")
                 .usingGeneratedKeyColumns("id");
     }
 
@@ -55,6 +56,7 @@ public class ReservationRepository {
         String sql = """
                 SELECT
                     r.id,
+                    r.member_id,
                     r.name,
                     r.date,
                     r.status,
@@ -76,10 +78,11 @@ public class ReservationRepository {
         return jdbcTemplate.query(sql, parameters, reservationRowMapper);
     }
 
-    public List<Reservation> findAllByName(String name, int size, int offset) {
+    public List<Reservation> findAllByMemberId(Long memberId, int size, int offset) {
         String sql = """
                 SELECT
                     r.id,
+                    r.member_id,
                     r.name,
                     r.date,
                     r.status,
@@ -92,12 +95,12 @@ public class ReservationRepository {
                 FROM reservation r
                 INNER JOIN reservation_time rt ON r.time_id = rt.id
                 INNER JOIN theme t ON r.theme_id = t.id
-                WHERE r.name = :name
+                WHERE r.member_id = :memberId
                 ORDER BY r.id
                 LIMIT :size OFFSET :offset
                 """;
         SqlParameterSource parameters = new MapSqlParameterSource()
-                .addValue("name", name)
+                .addValue("memberId", memberId)
                 .addValue("size", size)
                 .addValue("offset", offset);
         return jdbcTemplate.query(sql, parameters, reservationRowMapper);
@@ -105,13 +108,14 @@ public class ReservationRepository {
 
     public Reservation save(Reservation reservation) {
         SqlParameterSource parameters = new MapSqlParameterSource()
+                .addValue("member_id", reservation.getMemberId())
                 .addValue("name", reservation.getName())
                 .addValue("date", reservation.getDate())
                 .addValue("time_id", reservation.getTime().getId())
                 .addValue("theme_id", reservation.getTheme().getId())
                 .addValue("status", reservation.getStatus().name());
         Long id = simpleJdbcInsert.executeAndReturnKey(parameters).longValue();
-        return Reservation.from(id, reservation.getName(), reservation.getDate(), reservation.getTime(),
+        return Reservation.from(id, reservation.getMemberId(), reservation.getName(), reservation.getDate(), reservation.getTime(),
                 reservation.getTheme(), reservation.getStatus());
     }
 
@@ -119,6 +123,7 @@ public class ReservationRepository {
         String sql = """
                 SELECT
                     r.id,
+                    r.member_id,
                     r.name,
                     r.date,
                     r.status,

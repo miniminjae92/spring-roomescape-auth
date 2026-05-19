@@ -15,16 +15,18 @@ public class Reservation {
     private static final String NAME_PATTERN = "^[가-힣a-zA-Z ]+$";
 
     private final Long id;
+    private final Long memberId;
     private final String name;
     private final ReservationSchedule schedule;
     private final Theme theme;
     private final ReservationStatus status;
 
-    private Reservation(Long id, String name, LocalDate date, ReservationTime time, Theme theme,
+    private Reservation(Long id, Long memberId, String name, LocalDate date, ReservationTime time, Theme theme,
                         ReservationStatus status) {
         validateName(name);
         validateTheme(theme);
         this.id = id;
+        this.memberId = memberId;
         this.name = name;
         this.schedule = ReservationSchedule.of(date, time);
         this.theme = theme;
@@ -32,23 +34,32 @@ public class Reservation {
     }
 
     public static Reservation createNew(String name, LocalDate date, ReservationTime time, Theme theme) {
-        return new Reservation(null, name, date, time, theme, ReservationStatus.RESERVED);
+        return new Reservation(null, null, name, date, time, theme, ReservationStatus.RESERVED);
+    }
+
+    public static Reservation createNew(Long memberId, String name, LocalDate date, ReservationTime time, Theme theme) {
+        return new Reservation(null, memberId, name, date, time, theme, ReservationStatus.RESERVED);
     }
 
     public static Reservation from(Long id, String name, LocalDate date, ReservationTime time, Theme theme,
                                    ReservationStatus status) {
-        return new Reservation(id, name, date, time, theme, status);
+        return new Reservation(id, null, name, date, time, theme, status);
+    }
+
+    public static Reservation from(Long id, Long memberId, String name, LocalDate date, ReservationTime time,
+                                   Theme theme, ReservationStatus status) {
+        return new Reservation(id, memberId, name, date, time, theme, status);
     }
 
     public Reservation changeSchedule(LocalDate date, ReservationTime time) {
         validateReserved();
         validateDifferentSchedule(date, time);
-        return new Reservation(id, name, date, time, theme, status);
+        return new Reservation(id, memberId, name, date, time, theme, status);
     }
 
     public Reservation cancel() {
         validateReserved();
-        return new Reservation(id, name, getDate(), getTime(), theme, ReservationStatus.CANCELLED);
+        return new Reservation(id, memberId, name, getDate(), getTime(), theme, ReservationStatus.CANCELLED);
     }
 
     public boolean hasSameSchedule(LocalDate date, ReservationTime time) {
@@ -57,6 +68,10 @@ public class Reservation {
 
     public boolean isExpired(LocalDate today, LocalTime now) {
         return schedule.isExpired(today, now);
+    }
+
+    public boolean isOwnedBy(Long memberId) {
+        return this.memberId != null && this.memberId.equals(memberId);
     }
 
     public LocalDate getDate() {

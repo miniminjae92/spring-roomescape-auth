@@ -3,11 +3,8 @@ package roomescape.api;
 import static org.hamcrest.Matchers.is;
 
 import io.restassured.RestAssured;
-import io.restassured.http.ContentType;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.HashMap;
-import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -37,19 +34,7 @@ class AdminReservationApiTest extends ApiTestSupport {
     void 예약을_하드_삭제한다() {
         dataInitializer.createReservationTime(LocalTime.now());
         dataInitializer.createTheme("귀신의집", "무서워요", "/images/themes/reservation.webp");
-
-        Map<String, Object> params = new HashMap<>();
-        params.put("name", "고래");
-        params.put("date", LocalDate.now().plusDays(1).toString());
-        params.put("timeId", 1);
-        params.put("themeId", 1);
-
-        RestAssured.given().log().all()
-                .contentType(ContentType.JSON)
-                .body(params)
-                .when().post("/reservations")
-                .then().log().all()
-                .statusCode(201);
+        dataInitializer.createReservation("고래", LocalDate.now().plusDays(1), 1L, 1L);
 
         RestAssured.given().log().all()
                 .when().delete("/admin/reservations/1")
