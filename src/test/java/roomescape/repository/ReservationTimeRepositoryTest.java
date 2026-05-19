@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
+import roomescape.domain.Member;
 import roomescape.domain.Reservation;
 import roomescape.domain.ReservationTime;
 import roomescape.domain.Theme;
@@ -35,9 +36,9 @@ class ReservationTimeRepositoryTest {
         Theme targetTheme = dataInitializer.createTheme("대상 테마", "설명", "/images/themes/target.webp");
         Theme otherTheme = dataInitializer.createTheme("다른 테마", "설명", "/images/themes/other.webp");
 
-        dataInitializer.createReservation("사용자일", targetDate, reservedTime.getId(), targetTheme.getId());
-        dataInitializer.createReservation("사용자이", targetDate.plusDays(1), otherTime.getId(), targetTheme.getId());
-        dataInitializer.createReservation("사용자삼", targetDate, otherTime.getId(), otherTheme.getId());
+        createMemberReservation("사용자일", targetDate, reservedTime.getId(), targetTheme.getId());
+        createMemberReservation("사용자이", targetDate.plusDays(1), otherTime.getId(), targetTheme.getId());
+        createMemberReservation("사용자삼", targetDate, otherTime.getId(), otherTheme.getId());
 
         List<Long> reservedTimeIds = reservationTimeRepository.findReservedTimeIds(targetTheme.getId(), targetDate);
 
@@ -63,8 +64,8 @@ class ReservationTimeRepositoryTest {
         ReservationTime cancelledTime = dataInitializer.createReservationTime(LocalTime.of(11, 0));
         Theme theme = dataInitializer.createTheme("테마", "설명", "/images/themes/theme.webp");
 
-        dataInitializer.createReservation("예약사용자", targetDate, reservedTime.getId(), theme.getId());
-        Reservation cancelledReservation = dataInitializer.createReservation(
+        createMemberReservation("예약사용자", targetDate, reservedTime.getId(), theme.getId());
+        Reservation cancelledReservation = createMemberReservation(
                 "취소사용자",
                 targetDate,
                 cancelledTime.getId(),
@@ -75,5 +76,10 @@ class ReservationTimeRepositoryTest {
         List<Long> reservedTimeIds = reservationTimeRepository.findReservedTimeIds(theme.getId(), targetDate);
 
         assertThat(reservedTimeIds).containsExactly(reservedTime.getId());
+    }
+
+    private Reservation createMemberReservation(String name, LocalDate date, Long timeId, Long themeId) {
+        Member member = dataInitializer.createMember("member-" + name + "-" + date + "-" + timeId + "-" + themeId, "password", name);
+        return dataInitializer.createMemberReservation(member.getId(), member.getName(), date, timeId, themeId);
     }
 }

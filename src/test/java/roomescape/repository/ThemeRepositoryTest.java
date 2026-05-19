@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
+import roomescape.domain.Member;
 import roomescape.domain.ReservationTime;
 import roomescape.domain.Theme;
 import roomescape.util.TestDataInitializer;
@@ -153,7 +154,12 @@ class ThemeRepositoryTest {
 
     private void createReservations(Theme theme, LocalDate date, ReservationTime... times) {
         for (int index = 0; index < times.length; index++) {
-            dataInitializer.createReservation(USER_NAMES.get(index), date, times[index].getId(), theme.getId());
+            createMemberReservation(USER_NAMES.get(index), date, times[index].getId(), theme.getId());
         }
+    }
+
+    private void createMemberReservation(String name, LocalDate date, Long timeId, Long themeId) {
+        Member member = dataInitializer.createMember("member-" + name + "-" + date + "-" + timeId + "-" + themeId, "password", name);
+        dataInitializer.createMemberReservation(member.getId(), member.getName(), date, timeId, themeId);
     }
 }

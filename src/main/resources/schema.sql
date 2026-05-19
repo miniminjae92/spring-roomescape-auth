@@ -28,7 +28,7 @@ CREATE TABLE member
 CREATE TABLE reservation
 (
     id       BIGINT       NOT NULL AUTO_INCREMENT,
-    member_id BIGINT,
+    member_id BIGINT       NOT NULL,
     name     VARCHAR(255) NOT NULL,
     date     DATE         NOT NULL,
     time_id  BIGINT       NOT NULL,

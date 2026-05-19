@@ -23,6 +23,7 @@ public class Reservation {
 
     private Reservation(Long id, Long memberId, String name, LocalDate date, ReservationTime time, Theme theme,
                         ReservationStatus status) {
+        validateMemberId(memberId);
         validateName(name);
         validateTheme(theme);
         this.id = id;
@@ -33,17 +34,8 @@ public class Reservation {
         this.status = status;
     }
 
-    public static Reservation createNew(String name, LocalDate date, ReservationTime time, Theme theme) {
-        return new Reservation(null, null, name, date, time, theme, ReservationStatus.RESERVED);
-    }
-
     public static Reservation createNew(Long memberId, String name, LocalDate date, ReservationTime time, Theme theme) {
         return new Reservation(null, memberId, name, date, time, theme, ReservationStatus.RESERVED);
-    }
-
-    public static Reservation from(Long id, String name, LocalDate date, ReservationTime time, Theme theme,
-                                   ReservationStatus status) {
-        return new Reservation(id, null, name, date, time, theme, status);
     }
 
     public static Reservation from(Long id, Long memberId, String name, LocalDate date, ReservationTime time,
@@ -85,6 +77,12 @@ public class Reservation {
     private void validateDifferentSchedule(LocalDate date, ReservationTime time) {
         if (hasSameSchedule(date, time)) {
             throw new SameReservationScheduleException("이미 같은 일정으로 예약되어 있습니다.");
+        }
+    }
+
+    private void validateMemberId(Long memberId) {
+        if (memberId == null) {
+            throw new InvalidReservationException("예약 회원은 필수입니다.");
         }
     }
 

@@ -20,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import java.util.HashMap;
 import java.util.Map;
 import org.springframework.test.annotation.DirtiesContext;
+import roomescape.domain.Member;
 import roomescape.domain.Theme;
 import roomescape.domain.ReservationTime;
 import roomescape.util.ApiTestSupport;
@@ -125,17 +126,17 @@ class ThemeApiTest extends ApiTestSupport {
         LocalDate yesterday = LocalDate.now().minusDays(1);
 
         // 테마 A에 예약 3개
-        dataInitializer.createReservation("사용자일", yesterday, timeA.getId(), themeA.getId());
-        dataInitializer.createReservation("사용자이", yesterday, timeB.getId(), themeA.getId());
-        dataInitializer.createReservation("사용자삼", yesterday, timeC.getId(), themeA.getId());
+        createMemberReservation("사용자일", yesterday, timeA.getId(), themeA.getId());
+        createMemberReservation("사용자이", yesterday, timeB.getId(), themeA.getId());
+        createMemberReservation("사용자삼", yesterday, timeC.getId(), themeA.getId());
 
         // 테마 B에 예약 1개
-        dataInitializer.createReservation("사용자사", yesterday, timeA.getId(), themeB.getId());
+        createMemberReservation("사용자사", yesterday, timeA.getId(), themeB.getId());
 
         // 테마 C에 예약 3개
-        dataInitializer.createReservation("사용자오", yesterday, timeA.getId(), themeC.getId());
-        dataInitializer.createReservation("사용자육", yesterday, timeB.getId(), themeC.getId());
-        dataInitializer.createReservation("사용자칠", yesterday, timeC.getId(), themeC.getId());
+        createMemberReservation("사용자오", yesterday, timeA.getId(), themeC.getId());
+        createMemberReservation("사용자육", yesterday, timeB.getId(), themeC.getId());
+        createMemberReservation("사용자칠", yesterday, timeC.getId(), themeC.getId());
 
         RestAssured.given().log().all()
                 .queryParam("days", 7)
@@ -152,7 +153,7 @@ class ThemeApiTest extends ApiTestSupport {
     void 인기_테마_조회시_days와_limit를_생략하면_기본값을_사용한다() {
         Theme theme = dataInitializer.createTheme("A 테마", "설명A", "/images/themes/a.webp");
         ReservationTime time = dataInitializer.createReservationTime(LocalTime.of(15, 0));
-        dataInitializer.createReservation("사용자일", LocalDate.now().minusDays(1), time.getId(), theme.getId());
+        createMemberReservation("사용자일", LocalDate.now().minusDays(1), time.getId(), theme.getId());
 
         RestAssured.given().log().all()
                 .when().get("/themes/rank")
@@ -181,5 +182,10 @@ class ThemeApiTest extends ApiTestSupport {
                 .when().get("/themes/rank")
                 .then().log().all()
                 .statusCode(statusCode);
+    }
+
+    private void createMemberReservation(String name, LocalDate date, Long timeId, Long themeId) {
+        Member member = dataInitializer.createMember("member-" + name + "-" + date + "-" + timeId + "-" + themeId, "password", name);
+        dataInitializer.createMemberReservation(member.getId(), member.getName(), date, timeId, themeId);
     }
 }

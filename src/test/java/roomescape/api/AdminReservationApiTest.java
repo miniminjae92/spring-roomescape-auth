@@ -11,6 +11,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
+import roomescape.domain.Member;
 import roomescape.util.ApiTestSupport;
 import roomescape.util.TestDataInitializer;
 
@@ -34,7 +35,7 @@ class AdminReservationApiTest extends ApiTestSupport {
     void 예약을_하드_삭제한다() {
         dataInitializer.createReservationTime(LocalTime.now());
         dataInitializer.createTheme("귀신의집", "무서워요", "/images/themes/reservation.webp");
-        dataInitializer.createReservation("고래", LocalDate.now().plusDays(1), 1L, 1L);
+        createMemberReservation("고래", LocalDate.now().plusDays(1), 1L, 1L);
 
         RestAssured.given().log().all()
                 .when().delete("/admin/reservations/1")
@@ -63,5 +64,10 @@ class AdminReservationApiTest extends ApiTestSupport {
                 .when().get("/admin/reservations")
                 .then().log().all()
                 .statusCode(statusCode);
+    }
+
+    private void createMemberReservation(String name, LocalDate date, Long timeId, Long themeId) {
+        Member member = dataInitializer.createMember("member-" + name + "-" + date + "-" + timeId + "-" + themeId, "password", name);
+        dataInitializer.createMemberReservation(member.getId(), member.getName(), date, timeId, themeId);
     }
 }

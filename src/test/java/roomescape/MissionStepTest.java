@@ -65,8 +65,11 @@ class MissionStepTest extends ApiTestSupport {
     void DB_조회_API_전환() {
         dataInitializer.createReservationTime(LocalTime.now());
         dataInitializer.createTheme("hello", "world", "/images/themes/hello.webp");
+        dataInitializer.createMember("brown", "password", "브라운");
 
-        jdbcTemplate.update("INSERT INTO reservation (name, date, time_id, theme_id) VALUES (?, ?, ?, ?)", "브라운",
+        jdbcTemplate.update("INSERT INTO reservation (member_id, name, date, time_id, theme_id) VALUES (?, ?, ?, ?, ?)",
+                1,
+                "브라운",
                 "2023-08-05",
                 1, 1);
 

@@ -45,9 +45,9 @@ class ReservationRepositoryTest {
 
     @Test
     void 예약_목록을_페이징_조회한다() {
-        createReservation("사용자일", ten);
-        Reservation second = createReservation("사용자이", eleven);
-        Reservation third = createReservation("사용자삼", noon);
+        createMemberReservation("사용자일", ten);
+        Reservation second = createMemberReservation("사용자이", eleven);
+        Reservation third = createMemberReservation("사용자삼", noon);
 
         List<Reservation> reservations = reservationRepository.findAll(2, 1);
 
@@ -57,9 +57,9 @@ class ReservationRepositoryTest {
 
     @Test
     void 회원으로_예약_이력을_페이징_조회한다() {
-        Reservation first = createReservation(whale, ten);
-        createReservation(shark, eleven);
-        Reservation second = createReservation(whale, noon);
+        Reservation first = createMemberReservation(whale, ten);
+        createMemberReservation(shark, eleven);
+        Reservation second = createMemberReservation(whale, noon);
 
         List<Reservation> reservations = reservationRepository.findAllByMemberId(whale.getId(), 1, 1);
 
@@ -69,18 +69,19 @@ class ReservationRepositoryTest {
 
     @Test
     void 회원에_해당하는_예약이_없으면_빈_목록을_반환한다() {
-        createReservation(whale, ten);
+        createMemberReservation(whale, ten);
 
         List<Reservation> reservations = reservationRepository.findAllByMemberId(shark.getId(), 20, 0);
 
         assertThat(reservations).isEmpty();
     }
 
-    private Reservation createReservation(String name, ReservationTime time) {
-        return dataInitializer.createReservation(name, LocalDate.of(2026, 5, 20), time.getId(), theme.getId());
+    private Reservation createMemberReservation(String name, ReservationTime time) {
+        Member member = dataInitializer.createMember("member-" + name, "password", name);
+        return createMemberReservation(member, time);
     }
 
-    private Reservation createReservation(Member member, ReservationTime time) {
+    private Reservation createMemberReservation(Member member, ReservationTime time) {
         return dataInitializer.createMemberReservation(
                 member.getId(),
                 member.getName(),

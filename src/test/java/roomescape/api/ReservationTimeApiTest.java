@@ -16,6 +16,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
+import roomescape.domain.Member;
 import roomescape.domain.Theme;
 import roomescape.domain.ReservationTime;
 import roomescape.util.ApiTestSupport;
@@ -119,7 +120,7 @@ class ReservationTimeApiTest extends ApiTestSupport {
         Theme theme = dataInitializer.createTheme("hello", "world", "/images/themes/hello.webp");
 
         LocalDate date = LocalDate.now().plusDays(1);
-        dataInitializer.createReservation("라텔", date, ten.getId(), theme.getId());
+        createMemberReservation("라텔", date, ten.getId(), theme.getId());
 
         Map<String, Object> params = new HashMap<>();
         params.put("date", date.toString());
@@ -144,7 +145,7 @@ class ReservationTimeApiTest extends ApiTestSupport {
         Theme theme = dataInitializer.createTheme("hello", "world", "/images/themes/hello.webp");
 
         LocalDate date = LocalDate.now().plusDays(1);
-        dataInitializer.createReservation("라텔", date, ten.getId(), theme.getId());
+        createMemberReservation("라텔", date, ten.getId(), theme.getId());
 
         Map<String, Object> params = new HashMap<>();
         params.put("date", date.toString());
@@ -186,7 +187,7 @@ class ReservationTimeApiTest extends ApiTestSupport {
         ReservationTime time = dataInitializer.createReservationTime(LocalTime.of(10, 0));
         Theme theme = dataInitializer.createTheme("hello", "world", "/images/themes/hello.webp");
         LocalDate date = LocalDate.now().plusDays(1);
-        dataInitializer.createReservation("라텔", date, time.getId(), theme.getId());
+        createMemberReservation("라텔", date, time.getId(), theme.getId());
 
         RestAssured.given().log().all()
                 .when().delete("/reservation-times/{id}", time.getId())
@@ -205,5 +206,10 @@ class ReservationTimeApiTest extends ApiTestSupport {
                 .when().get("/reservation-times/available")
                 .then().log().all()
                 .statusCode(400);
+    }
+
+    private void createMemberReservation(String name, LocalDate date, Long timeId, Long themeId) {
+        Member member = dataInitializer.createMember("member-" + name + "-" + date + "-" + timeId + "-" + themeId, "password", name);
+        dataInitializer.createMemberReservation(member.getId(), member.getName(), date, timeId, themeId);
     }
 }

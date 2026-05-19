@@ -51,7 +51,7 @@ class ReservationApiTest extends ApiTestSupport {
         dataInitializer.createReservationTime(LocalTime.of(11, 0));
         dataInitializer.createTheme("귀신의집", "무서워요", "/images/themes/reservation.webp");
         dataInitializer.createMemberReservation(loginMember.getId(), "고래", TODAY.plusDays(1), 1L, 1L);
-        dataInitializer.createReservation("라텔", TODAY.plusDays(1), 2L, 1L);
+        createMemberReservation("라텔", TODAY.plusDays(1), 2L, 1L);
 
         RestAssured.given().log().all()
                 .when().get("/reservations")
@@ -266,7 +266,7 @@ class ReservationApiTest extends ApiTestSupport {
     void 같은_날짜_시간_테마로_중복_예약하면_409를_반환한다() {
         dataInitializer.createReservationTime(LocalTime.of(10, 0));
         dataInitializer.createTheme("귀신의집", "무서워요", "/images/themes/reservation.webp");
-        dataInitializer.createReservation("고래", TODAY.plusDays(1), 1L, 1L);
+        createMemberReservation("고래", TODAY.plusDays(1), 1L, 1L);
 
         Map<String, Object> params = new HashMap<>();
         params.put("date", TODAY.plusDays(1).toString());
@@ -384,7 +384,7 @@ class ReservationApiTest extends ApiTestSupport {
         dataInitializer.createReservationTime(LocalTime.of(11, 0));
         dataInitializer.createTheme("귀신의집", "무서워요", "/images/themes/reservation.webp");
         dataInitializer.createMemberReservation(loginMember.getId(), "고래", TODAY.plusDays(1), 1L, 1L);
-        dataInitializer.createReservation("라텔", TODAY.plusDays(1), 2L, 1L);
+        createMemberReservation("라텔", TODAY.plusDays(1), 2L, 1L);
 
         Map<String, Object> params = new HashMap<>();
         params.put("date", TODAY.plusDays(1).toString());
@@ -502,6 +502,11 @@ class ReservationApiTest extends ApiTestSupport {
     private void createReservationPrerequisites(LocalTime startAt) {
         dataInitializer.createReservationTime(startAt);
         dataInitializer.createTheme("귀신의집", "무서워요", "/images/themes/reservation.webp");
+    }
+
+    private void createMemberReservation(String name, LocalDate date, Long timeId, Long themeId) {
+        Member member = dataInitializer.createMember("member-" + name + "-" + date + "-" + timeId + "-" + themeId, "password", name);
+        dataInitializer.createMemberReservation(member.getId(), member.getName(), date, timeId, themeId);
     }
 
     private void createCancelledReservation() {
