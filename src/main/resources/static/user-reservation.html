@@ -292,8 +292,7 @@
         </div>
 
         <div class="step disabled" id="step4">
-            <h2><span class="step-num">4</span> 예약자 정보를 입력해주세요</h2>
-            <input type="text" id="nameInput" placeholder="예약자 성함 (ex: 홍길동)">
+            <h2><span class="step-num">4</span> 예약을 확정해주세요</h2>
             <button class="submit-btn" id="reserveBtn">예약 확정하기</button>
         </div>
     </div>
@@ -305,7 +304,6 @@
     const dateInput = document.getElementById('dateInput');
     const themeList = document.getElementById('themeList');
     const timeList = document.getElementById('timeList');
-    const nameInput = document.getElementById('nameInput');
     const reserveBtn = document.getElementById('reserveBtn');
     const step2 = document.getElementById('step2');
     const step3 = document.getElementById('step3');
@@ -406,19 +404,10 @@
 
         step4.classList.remove('disabled');
         step4.classList.add('active');
-        nameInput.focus();
     }
 
     reserveBtn.addEventListener('click', async () => {
-        const name = nameInput.value.trim();
-        if (!name) {
-            showToast('예약자 성함을 입력해주세요.', 'error');
-            nameInput.focus();
-            return;
-        }
-
         const payload = {
-            name: name,
             date: selectedDate,
             themeId: selectedThemeId,
             timeId: selectedTimeId
@@ -436,7 +425,7 @@
             loadAvailableTimes();
         } finally {
             reserveBtn.disabled = false;
-            reserveBtn.textContent = '지금 바로 예약하기';
+            reserveBtn.textContent = '예약 확정하기';
         }
     });
 </script>

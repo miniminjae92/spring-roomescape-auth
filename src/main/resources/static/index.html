@@ -208,6 +208,33 @@
             font-weight: 600;
         }
 
+        .login-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 0.75rem;
+            margin: 0 auto 2rem;
+            max-width: 760px;
+        }
+
+        .login-form input {
+            padding: 0.9rem 1rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.16);
+            background: rgba(0,0,0,0.42);
+            color: var(--text-main);
+            font: inherit;
+        }
+
+        .login-form button {
+            padding: 0.9rem 1.25rem;
+            border: none;
+            border-radius: 8px;
+            background: var(--primary);
+            color: #111827;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
         .admin-cards .card {
             padding: 1.5rem 1rem;
             min-width: 150px;
@@ -238,6 +265,7 @@
             h1 { font-size: 3rem; }
             .navbar { padding: 1rem; }
             .action-cards { grid-template-columns: 1fr; }
+            .login-form { grid-template-columns: 1fr; }
             .primary-card { grid-column: span 1; min-height: 180px; }
             .primary-card h2 { font-size: 2rem; }
             .card::after { opacity: 1; transform: translateX(0); font-size: 1.2rem; }
@@ -254,6 +282,12 @@
         <div class="hero-content">
             <h1>ESCAPE THE ORDINARY</h1>
             <p class="subtitle">당신의 한계를 시험할 미스터리 속으로.</p>
+
+            <form class="login-form" id="loginForm">
+                <input type="text" id="loginIdInput" placeholder="로그인 ID" autocomplete="username" required>
+                <input type="password" id="passwordInput" placeholder="비밀번호" autocomplete="current-password" required>
+                <button type="submit">로그인</button>
+            </form>
             
             <h2 class="section-title">For Challengers</h2>
             <div class="action-cards" style="margin-bottom: 3rem;">
@@ -272,5 +306,25 @@
             </div>
         </div>
     </main>
+<script type="module">
+    import { login } from '/js/api.js';
+
+    const loginForm = document.getElementById('loginForm');
+    const loginIdInput = document.getElementById('loginIdInput');
+    const passwordInput = document.getElementById('passwordInput');
+
+    loginForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        try {
+            const member = await login({
+                loginId: loginIdInput.value.trim(),
+                password: passwordInput.value
+            });
+            loginForm.querySelector('button').textContent = `${member.name}님 로그인됨`;
+        } catch (error) {
+            alert(error.message || '로그인에 실패했습니다.');
+        }
+    });
+</script>
 </body>
 </html>

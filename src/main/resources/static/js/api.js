@@ -5,6 +5,19 @@ export async function fetchThemes() {
     return data.themes || data;
 }
 
+export async function login(payload) {
+    const res = await fetch('/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+    if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || 'Failed to login');
+    }
+    return res.json();
+}
+
 export async function fetchRankedThemes(days, limit) {
     const res = await fetch(`/themes/rank?days=${days}&limit=${limit}`);
     if (!res.ok) throw new Error('Failed to fetch ranked themes');
@@ -74,9 +87,12 @@ export async function createReservation(payload) {
     return res.json();
 }
 
-export async function fetchMyReservations(name, page = 0, size = 20) {
-    const res = await fetch(`/reservations?name=${encodeURIComponent(name)}&page=${page}&size=${size}`);
-    if (!res.ok) throw new Error('Failed to fetch my reservations');
+export async function fetchMyReservations(page = 0, size = 20) {
+    const res = await fetch(`/reservations?page=${page}&size=${size}`);
+    if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || 'Failed to fetch my reservations');
+    }
     const data = await res.json();
     return data.reservations || data;
 }
@@ -94,13 +110,14 @@ export async function updateReservationSchedule(id, payload) {
     return res.json();
 }
 
-export async function cancelMyReservation(id, payload) {
+export async function cancelMyReservation(id) {
     const res = await fetch(`/reservations/${id}/cancellations`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        method: 'POST'
     });
-    if (!res.ok) throw new Error('Failed to cancel reservation');
+    if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || 'Failed to cancel reservation');
+    }
     return res.json();
 }
 

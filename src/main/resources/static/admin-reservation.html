@@ -299,12 +299,8 @@
         <p class="subtitle">전화 및 현장 방문 예약을 수동으로 추가하고 관리하세요.</p>
 
         <div class="card">
-            <h2>수동 예약 추가</h2>
+            <h2>예약 추가</h2>
             <form id="resForm" class="form-grid">
-                <div class="form-group">
-                    <label>예약자 성함</label>
-                    <input type="text" id="nameInput" placeholder="이름 입력" required>
-                </div>
                 <div class="form-group">
                     <label>예약 날짜</label>
                     <input type="date" id="dateInput" required>
@@ -499,7 +495,6 @@
     resForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const payload = {
-            name: document.getElementById('nameInput').value,
             date: document.getElementById('dateInput').value,
             themeId: parseInt(themeSelect.value),
             timeId: parseInt(timeSelect.value)
