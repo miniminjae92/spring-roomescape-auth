@@ -5,7 +5,9 @@ import java.time.LocalTime;
 import org.springframework.stereotype.Component;
 import roomescape.domain.Reservation;
 import roomescape.domain.ReservationTime;
+import roomescape.domain.Member;
 import roomescape.domain.Theme;
+import roomescape.repository.MemberRepository;
 import roomescape.global.exception.reservationtime.ReservationTimeNotFoundException;
 import roomescape.global.exception.theme.ThemeNotFoundException;
 import roomescape.repository.ReservationRepository;
@@ -18,12 +20,14 @@ public class TestDataInitializer {
     private final ReservationTimeRepository reservationTimeRepository;
     private final ThemeRepository themeRepository;
     private final ReservationRepository reservationRepository;
+    private final MemberRepository memberRepository;
 
     public TestDataInitializer(ReservationTimeRepository reservationTimeRepository, ThemeRepository themeRepository,
-                               ReservationRepository reservationRepository) {
+                               ReservationRepository reservationRepository, MemberRepository memberRepository) {
         this.reservationTimeRepository = reservationTimeRepository;
         this.themeRepository = themeRepository;
         this.reservationRepository = reservationRepository;
+        this.memberRepository = memberRepository;
     }
 
     public ReservationTime createReservationTime(LocalTime localTime) {
@@ -32,6 +36,10 @@ public class TestDataInitializer {
 
     public Theme createTheme(String name, String description, String imagePath) {
         return themeRepository.save(Theme.createNew(name, description, imagePath));
+    }
+
+    public Member createMember(String loginId, String password, String name) {
+        return memberRepository.save(Member.createNew(loginId, password, name));
     }
 
     public Reservation createReservation(String name, LocalDate date, Long timeId, Long themeId) {
