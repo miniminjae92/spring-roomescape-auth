@@ -28,7 +28,12 @@ VALUES ('공포의 저택', '원혼이 떠도는 저택에서 탈출하세요.',
        ('지하 던전', '드래곤의 둥지를 무사히 지나가세요.', '/images/themes/underground-dungeon.webp'),
        ('기억 조작소', '당신의 잃어버린 기억을 찾으세요.', '/images/themes/memory-lab.webp');
 
--- 3. 예약 (총 105건, 1순위: 예약 건수 내림차순, 2순위: 테마 이름 오름차순)
+-- 3. 회원
+INSERT INTO member (login_id, password, name)
+VALUES ('whale', 'password', '고래'),
+       ('shark', 'password', '상어');
+
+-- 4. 예약 (총 105건, 1순위: 예약 건수 내림차순, 2순위: 테마 이름 오름차순)
 INSERT INTO reservation (name, date, time_id, theme_id)
 VALUES
 -- [32건] 테마 1: 공포의 저택
