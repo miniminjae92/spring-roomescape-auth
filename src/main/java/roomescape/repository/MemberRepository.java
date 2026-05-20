@@ -51,4 +51,18 @@ public class MemberRepository {
                 .stream()
                 .findFirst();
     }
+
+    public Optional<Member> findById(Long id) {
+        String sql = """
+                SELECT id, login_id, password, name
+                FROM member
+                WHERE id = :id
+                """;
+        SqlParameterSource parameters = new MapSqlParameterSource()
+                .addValue("id", id);
+        return jdbcTemplate.query(sql, parameters, memberRowMapper)
+                .stream()
+                .findFirst();
+    }
+
 }
