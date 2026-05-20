@@ -1,6 +1,5 @@
 package roomescape.controller;
 
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -18,9 +17,9 @@ import roomescape.controller.dto.reservation.ReservationRequest;
 import roomescape.controller.dto.reservation.ReservationResponse;
 import roomescape.controller.dto.reservation.ReservationResponses;
 import roomescape.controller.dto.reservation.ReservationScheduleRequest;
+import roomescape.global.auth.Authenticated;
 import roomescape.global.auth.LoginMember;
 import roomescape.global.auth.LoginRequired;
-import roomescape.global.auth.SessionManager;
 import roomescape.service.ReservationService;
 import roomescape.service.dto.reservation.CancelReservationCommand;
 import roomescape.service.dto.reservation.ReservationPagingCondition;
@@ -36,12 +35,11 @@ public class ReservationController {
     @GetMapping
     @LoginRequired
     public ResponseEntity<ReservationResponses> getReservations(
-            HttpServletRequest request,
+            @Authenticated LoginMember loginMember,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
         ReservationPagingCondition condition = new ReservationPagingCondition(page, size);
-        LoginMember loginMember = getLoginMember(request);
         List<ReservationResponse> responses = reservationService.getReservationHistoryByMember(loginMember.id(), condition).stream()
                 .map(ReservationResponse::from)
                 .toList();
@@ -51,10 +49,10 @@ public class ReservationController {
     @PostMapping
     @LoginRequired
     public ResponseEntity<ReservationResponse> createReservation(
-            HttpServletRequest httpRequest,
+            @Authenticated LoginMember loginMember,
             @Valid @RequestBody ReservationRequest request
     ) {
-        ReservationResult reservationResult = reservationService.createReservation(request.toCommand(getLoginMember(httpRequest)));
+        ReservationResult reservationResult = reservationService.createReservation(request.toCommand(loginMember));
         ReservationResponse response = ReservationResponse.from(reservationResult);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(response);
@@ -63,27 +61,23 @@ public class ReservationController {
     @PutMapping("/{id}/schedule")
     @LoginRequired
     public ResponseEntity<ReservationResponse> changeReservationSchedule(
-            HttpServletRequest httpRequest,
+            @Authenticated LoginMember loginMember,
             @PathVariable Long id,
             @Valid @RequestBody ReservationScheduleRequest request
     ) {
-        ReservationResult result = reservationService.changeReservationSchedule(request.toCommand(id, getLoginMember(httpRequest)));
+        ReservationResult result = reservationService.changeReservationSchedule(request.toCommand(id, loginMember));
         return ResponseEntity.ok(ReservationResponse.from(result));
     }
 
     @PostMapping("/{id}/cancellations")
     @LoginRequired
     public ResponseEntity<ReservationResponse> cancelReservation(
-            HttpServletRequest httpRequest,
+            @Authenticated LoginMember loginMember,
             @PathVariable Long id
     ) {
         ReservationResult result = reservationService.cancelReservation(
-                new CancelReservationCommand(id, getLoginMember(httpRequest).id())
+                new CancelReservationCommand(id, loginMember.id())
         );
         return ResponseEntity.ok(ReservationResponse.from(result));
-    }
-
-    private LoginMember getLoginMember(HttpServletRequest request) {
-        return (LoginMember) request.getAttribute(SessionManager.LOGIN_MEMBER_ATTRIBUTE);
     }
 }
