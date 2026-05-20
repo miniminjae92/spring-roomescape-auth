@@ -35,4 +35,15 @@ class MemberRepositoryTest {
 
         assertThat(member).isEmpty();
     }
+
+    @Test
+    void 식별자로_회원을_조회한다() {
+        Member savedMember = memberRepository.save(Member.createNew("whale", "password", "고래"));
+
+        Optional<Member> member = memberRepository.findById(savedMember.getId());
+
+        assertThat(member).isPresent();
+        assertThat(member.get().getId()).isEqualTo(savedMember.getId());
+    }
+
 }

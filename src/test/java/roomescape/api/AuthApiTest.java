@@ -37,6 +37,32 @@ class AuthApiTest extends ApiTestSupport {
     }
 
     @Test
+    void 회원가입한다() {
+        RestAssured.given().log().all()
+                .contentType(ContentType.JSON)
+                .body(signupParams("whale", "고래", "password"))
+                .when().post("/signup")
+                .then().log().all()
+                .statusCode(201)
+                .cookie(SessionManager.SESSION_COOKIE_NAME, notNullValue())
+                .body("loginId", is("whale"))
+                .body("name", is("고래"));
+    }
+
+    @Test
+    void 이미_가입된_로그인_ID면_409를_반환한다() {
+        dataInitializer.createMember("whale", "password", "고래");
+
+        RestAssured.given().log().all()
+                .contentType(ContentType.JSON)
+                .body(signupParams("whale", "상어", "password"))
+                .when().post("/signup")
+                .then().log().all()
+                .statusCode(409)
+                .body("message", is("이미 가입된 로그인 ID입니다."));
+    }
+
+    @Test
     void 존재하지_않는_로그인_ID이면_401을_반환한다() {
         dataInitializer.createMember("whale", "password", "고래");
 
@@ -62,9 +88,44 @@ class AuthApiTest extends ApiTestSupport {
                 .body("message", is("잘못된 정보입니다. 다시 시도해주세요."));
     }
 
+    @Test
+    void 로그인한_사용자는_me를_조회할_수_있다() {
+        dataInitializer.createMember("whale", "password", "고래");
+        String sessionId = RestAssured.given()
+                .contentType(ContentType.JSON)
+                .body(loginParams("whale", "password"))
+                .when().post("/login")
+                .then().extract().cookie(SessionManager.SESSION_COOKIE_NAME);
+
+        RestAssured.given().log().all()
+                .cookie(SessionManager.SESSION_COOKIE_NAME, sessionId)
+                .when().get("/me")
+                .then().log().all()
+                .statusCode(200)
+                .body("loginId", is("whale"))
+                .body("name", is("고래"));
+    }
+
+    @Test
+    void 로그인하지_않으면_me_조회_시_401을_반환한다() {
+        RestAssured.given().log().all()
+                .when().get("/me")
+                .then().log().all()
+                .statusCode(401)
+                .body("message", is("인증이 필요합니다."));
+    }
+
     private Map<String, Object> loginParams(String loginId, String password) {
         Map<String, Object> params = new HashMap<>();
         params.put("loginId", loginId);
+        params.put("password", password);
+        return params;
+    }
+
+    private Map<String, Object> signupParams(String loginId, String name, String password) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("loginId", loginId);
+        params.put("name", name);
         params.put("password", password);
         return params;
     }
