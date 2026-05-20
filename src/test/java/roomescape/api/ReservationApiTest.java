@@ -62,6 +62,29 @@ class ReservationApiTest extends ApiTestSupport {
     }
 
     @Test
+    void Authorization_Bearer_헤더로도_예약_목록을_조회할_수_있다() {
+        RestAssured.requestSpecification = null;
+        dataInitializer.createReservationTime(LocalTime.of(10, 0));
+        dataInitializer.createTheme("귀신의집", "무서워요", "/images/themes/reservation.webp");
+        dataInitializer.createMemberReservation(loginMember.getId(), "고래", TODAY.plusDays(1), 1L, 1L);
+
+        String sessionId = RestAssured.given()
+                .contentType(ContentType.JSON)
+                .body(loginParams("whale", "password"))
+                .when().post("/login")
+                .then().extract()
+                .cookie(SessionManager.SESSION_COOKIE_NAME);
+
+        RestAssured.given().log().all()
+                .header("Authorization", "Bearer " + sessionId)
+                .when().get("/reservations")
+                .then().log().all()
+                .statusCode(200)
+                .body("reservations.size()", is(1))
+                .body("reservations[0].name", is("고래"));
+    }
+
+    @Test
     void 로그인_사용자는_본인의_예약_이력을_페이징_조회할_수_있다() {
         dataInitializer.createReservationTime(LocalTime.of(10, 0));
         dataInitializer.createReservationTime(LocalTime.of(11, 0));
