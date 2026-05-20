@@ -2,6 +2,7 @@ package roomescape.api;
 
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.startsWith;
 
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
@@ -33,6 +34,7 @@ class AuthApiTest extends ApiTestSupport {
                 .then().log().all()
                 .statusCode(200)
                 .cookie(SessionManager.SESSION_COOKIE_NAME, notNullValue())
+                .header("Authorization", startsWith("Bearer "))
                 .body("name", is("고래"));
     }
 
@@ -45,6 +47,7 @@ class AuthApiTest extends ApiTestSupport {
                 .then().log().all()
                 .statusCode(201)
                 .cookie(SessionManager.SESSION_COOKIE_NAME, notNullValue())
+                .header("Authorization", startsWith("Bearer "))
                 .body("loginId", is("whale"))
                 .body("name", is("고래"));
     }

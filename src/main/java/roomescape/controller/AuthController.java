@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -34,7 +35,7 @@ public class AuthController {
             HttpServletResponse response
     ) {
         LoginResult result = authService.login(request.toCommand());
-        addSessionCookie(response, result);
+        addAuthSession(response, result);
         return ResponseEntity.ok(LoginResponse.from(result));
     }
 
@@ -44,7 +45,7 @@ public class AuthController {
             HttpServletResponse response
     ) {
         LoginResult result = authService.signup(request.toCommand());
-        addSessionCookie(response, result);
+        addAuthSession(response, result);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(LoginResponse.from(result));
     }
@@ -63,8 +64,9 @@ public class AuthController {
         return ResponseEntity.noContent().build();
     }
 
-    private void addSessionCookie(HttpServletResponse response, LoginResult result) {
+    private void addAuthSession(HttpServletResponse response, LoginResult result) {
         Cookie cookie = sessionManager.createSession(new LoginMember(result.id(), result.name()));
         response.addCookie(cookie);
+        response.setHeader(HttpHeaders.AUTHORIZATION, "Bearer " + cookie.getValue());
     }
 }
