@@ -225,10 +225,7 @@
             <h2>일정 변경</h2>
             <form id="editForm">
                 <input type="hidden" id="editResId">
-                <div class="form-group">
-                    <label>새로운 테마</label>
-                    <select id="editTheme" required></select>
-                </div>
+                <input type="hidden" id="editThemeId">
                 <div class="form-group">
                     <label>새로운 날짜</label>
                     <input type="date" id="editDate" required>
@@ -246,7 +243,7 @@
     </div>
 
 <script type="module">
-    import { fetchMe, fetchMyReservations, cancelMyReservation, updateReservationSchedule, fetchThemes, fetchAvailableTimes } from '/js/api.js';
+    import { fetchMe, fetchMyReservations, cancelMyReservation, updateReservationSchedule, fetchAvailableTimes } from '/js/api.js';
     import { showToast } from '/js/utils.js';
 
     const resList = document.getElementById('resList');
@@ -260,7 +257,7 @@
 
     const editModal = document.getElementById('editModal');
     const editForm = document.getElementById('editForm');
-    const editTheme = document.getElementById('editTheme');
+    const editThemeId = document.getElementById('editThemeId');
     const editDate = document.getElementById('editDate');
     const editTime = document.getElementById('editTime');
 
@@ -268,19 +265,9 @@
     window.closeModal = () => editModal.style.display = 'none';
     window.openEditModal = async (id, currentThemeId, currentDate, currentTimeId) => {
         document.getElementById('editResId').value = id;
+        editThemeId.value = currentThemeId;
         editDate.value = currentDate;
-        
-        // Load themes
         try {
-            const themes = await fetchThemes();
-            editTheme.innerHTML = '<option value="">테마 선택</option>';
-            themes.forEach(t => {
-                const opt = document.createElement('option');
-                opt.value = t.id;
-                opt.textContent = t.name;
-                if(t.id == currentThemeId) opt.selected = true;
-                editTheme.appendChild(opt);
-            });
             await loadEditTimes();
             editModal.style.display = 'flex';
         } catch (e) {
@@ -300,7 +287,7 @@
     };
 
     async function loadEditTimes() {
-        const tId = editTheme.value;
+        const tId = editThemeId.value;
         const d = editDate.value;
         editTime.innerHTML = '<option value="">시간 선택</option>';
         if(!tId || !d) return;
@@ -320,7 +307,6 @@
         }
     }
 
-    editTheme.addEventListener('change', loadEditTimes);
     editDate.addEventListener('change', loadEditTimes);
 
     async function loadReservations(page) {

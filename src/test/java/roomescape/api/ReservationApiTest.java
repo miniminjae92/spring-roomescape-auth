@@ -323,6 +323,7 @@ class ReservationApiTest extends ApiTestSupport {
                 .statusCode(200)
                 .body("date", is(TODAY.plusDays(2).toString()))
                 .body("time.id", is(2))
+                .body("theme.id", is(1))
                 .body("status", is("RESERVED"));
     }
 
