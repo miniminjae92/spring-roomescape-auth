@@ -246,7 +246,7 @@
     </div>
 
 <script type="module">
-    import { fetchMyReservations, cancelMyReservation, updateReservationSchedule, fetchThemes, fetchAvailableTimes } from '/js/api.js';
+    import { fetchMe, fetchMyReservations, cancelMyReservation, updateReservationSchedule, fetchThemes, fetchAvailableTimes } from '/js/api.js';
     import { showToast } from '/js/utils.js';
 
     const resList = document.getElementById('resList');
@@ -409,7 +409,16 @@
         }
     });
 
-    loadReservations(0);
+    async function bootstrap() {
+        const me = await fetchMe();
+        if (!me) {
+            window.location.href = '/';
+            return;
+        }
+        await loadReservations(0);
+    }
+
+    bootstrap();
 
 </script>
 </body>

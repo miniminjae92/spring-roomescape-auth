@@ -9,13 +9,54 @@ export async function login(payload) {
     const res = await fetch('/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        credentials: 'same-origin',
+        body: JSON.stringify({
+            loginId: payload.loginId,
+            password: payload.password
+        })
     });
     if (!res.ok) {
         const err = await res.json();
         throw new Error(err.message || 'Failed to login');
     }
     return res.json();
+}
+
+export async function signup(payload) {
+    const res = await fetch('/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify(payload)
+    });
+    if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || 'Failed to signup');
+    }
+    return res.json();
+}
+
+export async function fetchMe() {
+    const res = await fetch('/me', { credentials: 'same-origin' });
+    if (res.status === 401) {
+        return null;
+    }
+    if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || 'Failed to fetch me');
+    }
+    return res.json();
+}
+
+export async function logout() {
+    const res = await fetch('/logout', {
+        method: 'POST',
+        credentials: 'same-origin'
+    });
+    if (!res.ok && res.status !== 204) {
+        const err = await res.json();
+        throw new Error(err.message || 'Failed to logout');
+    }
 }
 
 export async function fetchRankedThemes(days, limit) {
@@ -78,6 +119,7 @@ export async function createReservation(payload) {
     const res = await fetch('/reservations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
         body: JSON.stringify(payload)
     });
     if (!res.ok) {
@@ -88,7 +130,9 @@ export async function createReservation(payload) {
 }
 
 export async function fetchMyReservations(page = 0, size = 20) {
-    const res = await fetch(`/reservations?page=${page}&size=${size}`);
+    const res = await fetch(`/reservations?page=${page}&size=${size}`, {
+        credentials: 'same-origin'
+    });
     if (!res.ok) {
         const err = await res.json();
         throw new Error(err.message || 'Failed to fetch my reservations');
@@ -101,6 +145,7 @@ export async function updateReservationSchedule(id, payload) {
     const res = await fetch(`/reservations/${id}/schedule`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
         body: JSON.stringify(payload)
     });
     if (!res.ok) {
@@ -112,7 +157,8 @@ export async function updateReservationSchedule(id, payload) {
 
 export async function cancelMyReservation(id) {
     const res = await fetch(`/reservations/${id}/cancellations`, {
-        method: 'POST'
+        method: 'POST',
+        credentials: 'same-origin'
     });
     if (!res.ok) {
         const err = await res.json();
