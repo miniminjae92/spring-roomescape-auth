@@ -66,6 +66,30 @@
             transition: color 0.3s;
         }
 
+        .navbar-right {
+            display: inline-flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-state {
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .logout-button {
+            display: none;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(0,0,0,0.35);
+            color: var(--text-main);
+            border-radius: 8px;
+            padding: 0.55rem 0.9rem;
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
         .navbar a.admin-link:hover {
             color: var(--primary);
         }
@@ -208,74 +232,6 @@
             font-weight: 600;
         }
 
-        .login-form {
-            display: grid;
-            grid-template-columns: 1fr 1fr auto;
-            gap: 0.75rem;
-            margin: 0 auto 2rem;
-            max-width: 760px;
-        }
-
-        .login-form input {
-            padding: 0.9rem 1rem;
-            border-radius: 8px;
-            border: 1px solid rgba(255,255,255,0.16);
-            background: rgba(0,0,0,0.42);
-            color: var(--text-main);
-            font: inherit;
-        }
-
-        .login-form button {
-            padding: 0.9rem 1.25rem;
-            border: none;
-            border-radius: 8px;
-            background: var(--primary);
-            color: #111827;
-            font-weight: 800;
-            cursor: pointer;
-        }
-
-        .auth-mode {
-            display: inline-flex;
-            gap: 0.5rem;
-            margin-bottom: 1rem;
-            padding: 0.25rem;
-            border: 1px solid rgba(255,255,255,0.12);
-            border-radius: 8px;
-            background: rgba(0,0,0,0.3);
-        }
-
-        .auth-mode button {
-            padding: 0.55rem 1rem;
-            border: none;
-            border-radius: 6px;
-            background: transparent;
-            color: var(--text-muted);
-            font: inherit;
-            font-weight: 800;
-            cursor: pointer;
-        }
-
-        .auth-mode button.active {
-            background: var(--primary);
-            color: #111827;
-        }
-
-        .auth-message {
-            min-height: 1.5rem;
-            margin: -1.25rem auto 2rem;
-            color: var(--text-muted);
-            font-size: 0.95rem;
-        }
-
-        .auth-message.error {
-            color: #fca5a5;
-        }
-
-        .auth-message.success {
-            color: #86efac;
-        }
-
         .admin-cards .card {
             padding: 1.5rem 1rem;
             min-width: 150px;
@@ -302,11 +258,20 @@
             transform: translateY(-5px);
         }
 
+        .auth-link {
+            color: var(--text-main);
+            text-decoration: none;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(0,0,0,0.35);
+            border-radius: 8px;
+            padding: 0.55rem 0.9rem;
+            font-weight: 700;
+        }
+
         @media (max-width: 768px) {
             h1 { font-size: 3rem; }
             .navbar { padding: 1rem; }
             .action-cards { grid-template-columns: 1fr; }
-            .login-form { grid-template-columns: 1fr; }
             .primary-card { grid-column: span 1; min-height: 180px; }
             .primary-card h2 { font-size: 2rem; }
             .card::after { opacity: 1; transform: translateX(0); font-size: 1.2rem; }
@@ -316,33 +281,26 @@
 <body>
     <nav class="navbar">
         <div class="logo">ROOM ESCAPE</div>
-        <a href="/admin-reservation.html" class="admin-link">ADMIN</a>
+        <div class="navbar-right">
+            <span class="user-state" id="userStateLabel">비로그인</span>
+            <a href="/admin-reservation.html" class="admin-link">ADMIN</a>
+            <a href="/auth.html" class="auth-link" id="authLink">로그인/회원가입</a>
+            <button type="button" class="logout-button" id="logoutButton">로그아웃</button>
+        </div>
     </nav>
 
     <main class="hero">
         <div class="hero-content">
             <h1>ESCAPE THE ORDINARY</h1>
             <p class="subtitle">당신의 한계를 시험할 미스터리 속으로.</p>
-
-            <div class="auth-mode" aria-label="인증 방식 선택">
-                <button type="button" class="active" id="loginModeButton">로그인</button>
-                <button type="button" id="signupModeButton">회원가입</button>
-            </div>
-            <form class="login-form" id="authForm">
-                <input type="text" id="loginIdInput" placeholder="로그인 ID" autocomplete="username" required>
-                <input type="text" id="nameInput" placeholder="이름(회원가입 시)" autocomplete="name" style="display: none;">
-                <input type="password" id="passwordInput" placeholder="비밀번호" autocomplete="current-password" required>
-                <button type="submit" id="authSubmitButton">로그인</button>
-            </form>
-            <p class="auth-message" id="authMessage"></p>
             
             <h2 class="section-title">For Challengers</h2>
             <div class="action-cards" style="margin-bottom: 3rem;">
-                <a href="/user-reservation.html" class="card primary-card">
+                <a href="/user-reservation.html" class="card primary-card" id="reservationCardLink">
                     <h2>방탈출 예약하기</h2>
                     <p>원하는 테마와 시간을 선택하고<br>도전을 시작하세요.</p>
                 </a>
-                <a href="/my-reservation.html" class="card secondary-card">
+                <a href="/my-reservation.html" class="card secondary-card" id="myReservationCardLink">
                     <h2>내 예약 관리</h2>
                     <p>나의 예약 내역을 조회하고<br>일정을 변경하거나 취소하세요.</p>
                 </a>
@@ -354,85 +312,54 @@
         </div>
     </main>
 <script type="module">
-    import { fetchMe, login, logout, signup } from '/js/api.js';
+    import { fetchMe, logout } from '/js/api.js';
+    const userStateLabel = document.getElementById('userStateLabel');
+    const authLink = document.getElementById('authLink');
+    const logoutButton = document.getElementById('logoutButton');
+    const reservationCardLink = document.getElementById('reservationCardLink');
+    const myReservationCardLink = document.getElementById('myReservationCardLink');
 
-    const authForm = document.getElementById('authForm');
-    const loginIdInput = document.getElementById('loginIdInput');
-    const nameInput = document.getElementById('nameInput');
-    const passwordInput = document.getElementById('passwordInput');
-    const authMessage = document.getElementById('authMessage');
-    const authSubmitButton = document.getElementById('authSubmitButton');
-    const loginModeButton = document.getElementById('loginModeButton');
-    const signupModeButton = document.getElementById('signupModeButton');
+    let loginMember = null;
 
-    let authMode = 'login';
-
-    function setAuthMode(nextMode) {
-        authMode = nextMode;
-        const isLogin = authMode === 'login';
-        loginModeButton.classList.toggle('active', isLogin);
-        signupModeButton.classList.toggle('active', !isLogin);
-        authSubmitButton.textContent = isLogin ? '로그인' : '가입하기';
-        nameInput.style.display = isLogin ? 'none' : 'block';
-        nameInput.required = !isLogin;
-        authMessage.className = 'auth-message';
-        authMessage.textContent = '';
+    function updateAuthUi() {
+        const isLoggedIn = loginMember !== null;
+        userStateLabel.textContent = isLoggedIn ? `${loginMember.name}님` : '비로그인';
+        logoutButton.style.display = isLoggedIn ? 'inline-flex' : 'none';
+        authLink.style.display = isLoggedIn ? 'none' : 'inline-flex';
     }
 
-    loginModeButton.addEventListener('click', () => setAuthMode('login'));
-    signupModeButton.addEventListener('click', () => setAuthMode('signup'));
-
-    authForm.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        authSubmitButton.disabled = true;
-        authMessage.className = 'auth-message';
-        authMessage.textContent = authMode === 'login' ? '로그인 중입니다.' : '가입 중입니다.';
-        try {
-            const payload = {
-                loginId: loginIdInput.value.trim(),
-                password: passwordInput.value
-            };
-            if (authMode !== 'login') {
-                payload.name = nameInput.value.trim();
+    function bindProtectedNavigation(linkElement) {
+        linkElement.addEventListener('click', (event) => {
+            if (loginMember) {
+                return;
             }
-            const member = authMode === 'login'
-                    ? await login(payload)
-                    : await signup(payload);
-            authSubmitButton.textContent = `${member.name}님 로그아웃`;
-            authSubmitButton.disabled = false;
-            authMessage.className = 'auth-message success';
-            authMessage.textContent = authMode === 'login' ? '로그인되었습니다.' : '가입되었습니다.';
-        } catch (error) {
-            authMessage.className = 'auth-message error';
-            authMessage.textContent = error.message || '요청을 처리하지 못했습니다.';
-            authSubmitButton.disabled = false;
-        }
-    });
+            event.preventDefault();
+            window.location.href = `/auth.html?next=${encodeURIComponent(linkElement.getAttribute('href'))}`;
+        });
+    }
 
     async function initializeAuthState() {
         try {
             const me = await fetchMe();
             if (!me) {
+                updateAuthUi();
                 return;
             }
-            authSubmitButton.textContent = `${me.name}님 로그아웃`;
-            authMessage.className = 'auth-message success';
-            authMessage.textContent = `${me.name}님 로그인 상태입니다.`;
-            authSubmitButton.disabled = false;
-            authSubmitButton.addEventListener('click', async (event) => {
-                if (authMode !== 'login') {
-                    return;
-                }
-                event.preventDefault();
-                await logout();
-                window.location.reload();
-            });
+            loginMember = me;
+            updateAuthUi();
         } catch (error) {
-            authMessage.className = 'auth-message error';
-            authMessage.textContent = error.message || '로그인 상태 확인에 실패했습니다.';
+            updateAuthUi();
         }
     }
 
+    logoutButton.addEventListener('click', async () => {
+        await logout();
+        loginMember = null;
+        updateAuthUi();
+    });
+
+    bindProtectedNavigation(reservationCardLink);
+    bindProtectedNavigation(myReservationCardLink);
     initializeAuthState();
 </script>
 </body>

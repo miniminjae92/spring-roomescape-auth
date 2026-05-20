@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로그인 / 회원가입 - Roomescape</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #f59e0b;
+            --bg-dark: #09090b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Outfit', -apple-system, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            padding: 2rem;
+        }
+        .panel {
+            width: 100%;
+            max-width: 520px;
+            border: 1px solid rgba(255,255,255,0.12);
+            background: rgba(255,255,255,0.03);
+            border-radius: 10px;
+            padding: 2rem;
+        }
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            margin-bottom: 0.5rem;
+        }
+        .desc {
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+        }
+        .auth-mode {
+            display: inline-flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            padding: 0.25rem;
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 8px;
+            background: rgba(0,0,0,0.3);
+        }
+        .auth-mode button {
+            padding: 0.55rem 1rem;
+            border: none;
+            border-radius: 6px;
+            background: transparent;
+            color: var(--text-muted);
+            font: inherit;
+            font-weight: 800;
+            cursor: pointer;
+        }
+        .auth-mode button.active {
+            background: var(--primary);
+            color: #111827;
+        }
+        .form {
+            display: grid;
+            gap: 0.75rem;
+        }
+        .form input, .form button {
+            width: 100%;
+            padding: 0.9rem 1rem;
+            border-radius: 8px;
+            font: inherit;
+        }
+        .form input {
+            border: 1px solid rgba(255,255,255,0.16);
+            background: rgba(0,0,0,0.42);
+            color: var(--text-main);
+        }
+        .form button {
+            border: none;
+            background: var(--primary);
+            color: #111827;
+            font-weight: 800;
+            cursor: pointer;
+        }
+        .message {
+            min-height: 1.5rem;
+            margin-top: 0.8rem;
+            color: var(--text-muted);
+        }
+        .message.error { color: #fca5a5; }
+        .message.success { color: #86efac; }
+        .back {
+            display: inline-block;
+            margin-top: 1rem;
+            color: var(--text-muted);
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+<section class="panel">
+    <h1>인증</h1>
+    <p class="desc">로그인 후 예약 관련 기능을 이용할 수 있습니다.</p>
+    <div class="auth-mode" aria-label="인증 모드">
+        <button type="button" class="active" id="loginModeButton">로그인</button>
+        <button type="button" id="signupModeButton">회원가입</button>
+    </div>
+    <form class="form" id="authForm">
+        <input type="text" id="loginIdInput" placeholder="로그인 ID" autocomplete="username" required>
+        <input type="text" id="nameInput" placeholder="이름(회원가입 시)" autocomplete="name" style="display:none;">
+        <input type="password" id="passwordInput" placeholder="비밀번호" autocomplete="current-password" required>
+        <button type="submit" id="authSubmitButton">로그인</button>
+    </form>
+    <p class="message" id="authMessage"></p>
+    <a class="back" href="/">메인으로 돌아가기</a>
+</section>
+<script type="module">
+    import { login, signup } from '/js/api.js';
+
+    const authForm = document.getElementById('authForm');
+    const loginIdInput = document.getElementById('loginIdInput');
+    const nameInput = document.getElementById('nameInput');
+    const passwordInput = document.getElementById('passwordInput');
+    const authMessage = document.getElementById('authMessage');
+    const authSubmitButton = document.getElementById('authSubmitButton');
+    const loginModeButton = document.getElementById('loginModeButton');
+    const signupModeButton = document.getElementById('signupModeButton');
+
+    const nextPath = new URLSearchParams(window.location.search).get('next') || '/';
+    let authMode = 'login';
+
+    function setAuthMode(nextMode) {
+        authMode = nextMode;
+        const isLogin = authMode === 'login';
+        loginModeButton.classList.toggle('active', isLogin);
+        signupModeButton.classList.toggle('active', !isLogin);
+        authSubmitButton.textContent = isLogin ? '로그인' : '가입하기';
+        nameInput.style.display = isLogin ? 'none' : 'block';
+        nameInput.required = !isLogin;
+        authMessage.className = 'message';
+        authMessage.textContent = '';
+    }
+
+    loginModeButton.addEventListener('click', () => setAuthMode('login'));
+    signupModeButton.addEventListener('click', () => setAuthMode('signup'));
+
+    authForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        authSubmitButton.disabled = true;
+        authMessage.className = 'message';
+        authMessage.textContent = authMode === 'login' ? '로그인 중입니다.' : '가입 중입니다.';
+        try {
+            const payload = {
+                loginId: loginIdInput.value.trim(),
+                password: passwordInput.value
+            };
+            if (authMode !== 'login') {
+                payload.name = nameInput.value.trim();
+            }
+            await (authMode === 'login' ? login(payload) : signup(payload));
+            authMessage.className = 'message success';
+            authMessage.textContent = authMode === 'login' ? '로그인되었습니다.' : '가입되었습니다.';
+            window.location.href = nextPath;
+        } catch (error) {
+            authMessage.className = 'message error';
+            authMessage.textContent = error.message || '요청을 처리하지 못했습니다.';
+        } finally {
+            authSubmitButton.disabled = false;
+        }
+    });
+</script>
+</body>
+</html>
