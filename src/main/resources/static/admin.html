@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 메인 - Roomescape</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #f59e0b;
+            --primary-hover: #d97706;
+            --bg-dark: #09090b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', -apple-system, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            overflow-x: hidden;
+        }
+
+        .hero {
+            position: relative;
+            width: 100vw;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: url('https://images.unsplash.com/photo-1519074069444-1ba4fff66d16?q=80&w=2500&auto=format&fit=crop') no-repeat center center/cover;
+            padding: 7rem 1.5rem 4rem;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to bottom, rgba(9, 9, 11, 0.35), rgba(9, 9, 11, 0.96));
+            z-index: 1;
+        }
+
+        .navbar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 1.5rem 3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 900;
+            letter-spacing: 0.1em;
+            color: white;
+        }
+
+        .navbar-right {
+            display: inline-flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-state {
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .nav-button,
+        .logout-button {
+            color: var(--text-main);
+            text-decoration: none;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(0,0,0,0.35);
+            border-radius: 8px;
+            padding: 0.55rem 0.9rem;
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 900px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 4rem;
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            text-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            margin-bottom: 3.5rem;
+            font-weight: 300;
+            letter-spacing: 0.05em;
+        }
+
+        .section-title {
+            font-size: 1rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .action-cards {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .card {
+            padding: 2.25rem 2rem;
+            border-radius: 10px;
+            text-decoration: none;
+            text-align: left;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.08);
+            backdrop-filter: blur(20px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .card h2 {
+            font-size: 1.7rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            color: white;
+            z-index: 2;
+        }
+
+        .card p {
+            font-size: 0.95rem;
+            color: rgba(255,255,255,0.72);
+            line-height: 1.5;
+            z-index: 2;
+        }
+
+        .card::after {
+            content: '>';
+            position: absolute;
+            bottom: 2rem;
+            right: 2rem;
+            font-size: 1.5rem;
+            color: white;
+            opacity: 0;
+            transform: translateX(-10px);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(255,255,255,0.22);
+        }
+
+        .card:hover::after {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .primary-card {
+            grid-column: span 2;
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.17), rgba(217, 119, 6, 0.06));
+            border-color: rgba(245, 158, 11, 0.34);
+            min-height: 190px;
+        }
+
+        .primary-card h2 {
+            font-size: 2.4rem;
+            color: var(--primary);
+        }
+
+        .secondary-card {
+            min-height: 170px;
+            background: rgba(255, 255, 255, 0.035);
+        }
+
+        .secondary-card:hover {
+            background: rgba(255, 255, 255, 0.065);
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 1rem;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .navbar-right {
+                flex-wrap: wrap;
+                justify-content: flex-end;
+            }
+
+            h1 {
+                font-size: 2.7rem;
+            }
+
+            .action-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .primary-card {
+                grid-column: span 1;
+            }
+
+            .primary-card h2 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">ROOM ESCAPE ADMIN</div>
+        <div class="navbar-right">
+            <span class="user-state" id="userStateLabel">확인 중</span>
+            <a href="/" class="nav-button">사용자 메인</a>
+            <button type="button" class="logout-button" id="logoutButton">로그아웃</button>
+        </div>
+    </nav>
+
+    <main class="hero">
+        <div class="hero-content">
+            <h1>ADMIN CONTROL</h1>
+            <p class="subtitle">예약, 시간, 테마 운영을 관리하세요.</p>
+
+            <h2 class="section-title">For Managers</h2>
+            <div class="action-cards">
+                <a href="/admin-reservation.html" class="card primary-card">
+                    <h2>예약 현황 관리</h2>
+                    <p>전체 예약을 확인하고 매장 운영 상황에 맞게 예약을 관리하세요.</p>
+                </a>
+                <a href="/admin-time.html" class="card secondary-card">
+                    <h2>예약 시간 관리</h2>
+                    <p>예약 가능한 시간대를 추가하거나 사용하지 않는 시간을 정리하세요.</p>
+                </a>
+                <a href="/admin-theme.html" class="card secondary-card">
+                    <h2>테마 관리</h2>
+                    <p>방탈출 테마 정보를 추가하고 노출되는 테마 목록을 관리하세요.</p>
+                </a>
+            </div>
+        </div>
+    </main>
+
+<script type="module">
+    import { logout, requireManager } from '/js/api.js';
+
+    const userStateLabel = document.getElementById('userStateLabel');
+    const logoutButton = document.getElementById('logoutButton');
+
+    const manager = await requireManager();
+    if (manager) {
+        userStateLabel.textContent = `${manager.name}님`;
+    }
+
+    logoutButton.addEventListener('click', async () => {
+        await logout();
+        window.location.href = '/';
+    });
+</script>
+</body>
+</html>

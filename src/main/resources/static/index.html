@@ -256,6 +256,10 @@
             font-weight: 700;
         }
 
+        #adminHomeLink {
+            display: none;
+        }
+
         @media (max-width: 768px) {
             h1 { font-size: 3rem; }
             .navbar { padding: 1rem; }
@@ -271,6 +275,7 @@
         <div class="logo">ROOM ESCAPE</div>
         <div class="navbar-right">
             <span class="user-state" id="userStateLabel">비로그인</span>
+            <a href="/admin.html" class="auth-link" id="adminHomeLink">관리자 메인</a>
             <a href="/auth.html" class="auth-link" id="authLink">로그인/회원가입</a>
             <button type="button" class="logout-button" id="logoutButton">로그아웃</button>
         </div>
@@ -302,6 +307,7 @@
     import { fetchMe, logout } from '/js/api.js';
     const userStateLabel = document.getElementById('userStateLabel');
     const authLink = document.getElementById('authLink');
+    const adminHomeLink = document.getElementById('adminHomeLink');
     const logoutButton = document.getElementById('logoutButton');
     const reservationCardLink = document.getElementById('reservationCardLink');
     const myReservationCardLink = document.getElementById('myReservationCardLink');
@@ -310,7 +316,9 @@
 
     function updateAuthUi() {
         const isLoggedIn = loginMember !== null;
+        const isManager = loginMember?.role === 'MANAGER';
         userStateLabel.textContent = isLoggedIn ? `${loginMember.name}님` : '비로그인';
+        adminHomeLink.style.display = isManager ? 'inline-flex' : 'none';
         logoutButton.style.display = isLoggedIn ? 'inline-flex' : 'none';
         authLink.style.display = isLoggedIn ? 'none' : 'inline-flex';
     }

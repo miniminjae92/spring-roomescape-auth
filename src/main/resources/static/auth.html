@@ -139,7 +139,7 @@
     }
 
     function isAdminPath(path) {
-        return path?.startsWith('/admin-') || path?.startsWith('/admin/');
+        return path === '/admin.html' || path?.startsWith('/admin-') || path?.startsWith('/admin/');
     }
 
     function getRedirectPath(member) {
@@ -148,7 +148,7 @@
             return nextPath;
         }
         if (member.role === 'MANAGER') {
-            return '/admin-reservation.html';
+            return '/admin.html';
         }
         return '/';
     }
