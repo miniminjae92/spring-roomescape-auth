@@ -128,8 +128,30 @@
     const loginModeButton = document.getElementById('loginModeButton');
     const signupModeButton = document.getElementById('signupModeButton');
 
-    const nextPath = new URLSearchParams(window.location.search).get('next') || '/';
+    const rawNextPath = new URLSearchParams(window.location.search).get('next');
     let authMode = 'login';
+
+    function sanitizeNextPath(path) {
+        if (!path || !path.startsWith('/') || path.startsWith('//')) {
+            return null;
+        }
+        return path;
+    }
+
+    function isAdminPath(path) {
+        return path?.startsWith('/admin-') || path?.startsWith('/admin/');
+    }
+
+    function getRedirectPath(member) {
+        const nextPath = sanitizeNextPath(rawNextPath);
+        if (nextPath && (!isAdminPath(nextPath) || member.role === 'MANAGER')) {
+            return nextPath;
+        }
+        if (member.role === 'MANAGER') {
+            return '/admin-reservation.html';
+        }
+        return '/';
+    }
 
     function setAuthMode(nextMode) {
         authMode = nextMode;
@@ -159,10 +181,10 @@
             if (authMode !== 'login') {
                 payload.name = nameInput.value.trim();
             }
-            await (authMode === 'login' ? login(payload) : signup(payload));
+            const member = await (authMode === 'login' ? login(payload) : signup(payload));
             authMessage.className = 'message success';
             authMessage.textContent = authMode === 'login' ? '로그인되었습니다.' : '가입되었습니다.';
-            window.location.href = nextPath;
+            window.location.href = getRedirectPath(member);
         } catch (error) {
             authMessage.className = 'message error';
             authMessage.textContent = error.message || '요청을 처리하지 못했습니다.';
