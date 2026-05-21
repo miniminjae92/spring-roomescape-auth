@@ -293,7 +293,7 @@
         if(!tId || !d) return;
         
         try {
-            const times = await fetchAvailableTimes(tId, d);
+            const times = await fetchAvailableTimes(1, tId, d);
             times.forEach(t => {
                 if(t.available) {
                     const opt = document.createElement('option');

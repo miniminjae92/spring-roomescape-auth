@@ -6,12 +6,15 @@ import org.springframework.stereotype.Component;
 import roomescape.domain.Member;
 import roomescape.domain.Reservation;
 import roomescape.domain.ReservationTime;
+import roomescape.domain.Store;
 import roomescape.domain.Theme;
 import roomescape.global.exception.reservationtime.ReservationTimeNotFoundException;
 import roomescape.global.exception.theme.ThemeNotFoundException;
 import roomescape.repository.MemberRepository;
 import roomescape.repository.ReservationRepository;
 import roomescape.repository.ReservationTimeRepository;
+import roomescape.repository.StoreManagerRepository;
+import roomescape.repository.StoreRepository;
 import roomescape.repository.ThemeRepository;
 
 @Component
@@ -21,13 +24,18 @@ public class TestDataInitializer {
     private final ThemeRepository themeRepository;
     private final ReservationRepository reservationRepository;
     private final MemberRepository memberRepository;
+    private final StoreRepository storeRepository;
+    private final StoreManagerRepository storeManagerRepository;
 
     public TestDataInitializer(ReservationTimeRepository reservationTimeRepository, ThemeRepository themeRepository,
-                               ReservationRepository reservationRepository, MemberRepository memberRepository) {
+                               ReservationRepository reservationRepository, MemberRepository memberRepository,
+                               StoreRepository storeRepository, StoreManagerRepository storeManagerRepository) {
         this.reservationTimeRepository = reservationTimeRepository;
         this.themeRepository = themeRepository;
         this.reservationRepository = reservationRepository;
         this.memberRepository = memberRepository;
+        this.storeRepository = storeRepository;
+        this.storeManagerRepository = storeManagerRepository;
     }
 
     public ReservationTime createReservationTime(LocalTime localTime) {
@@ -42,10 +50,26 @@ public class TestDataInitializer {
         return memberRepository.save(Member.createNew(loginId, password, name));
     }
 
+    public Member createManager(String loginId, String password, String name) {
+        return memberRepository.save(Member.createManager(loginId, password, name));
+    }
+
+    public Store createStore(String name) {
+        return storeRepository.save(Store.createNew(name));
+    }
+
+    public void createStoreManager(Long storeId, Long memberId) {
+        storeManagerRepository.save(storeId, memberId);
+    }
+
     public Reservation createMemberReservation(Long memberId, String name, LocalDate date, Long timeId, Long themeId) {
+        return createMemberReservation(1L, memberId, name, date, timeId, themeId);
+    }
+
+    public Reservation createMemberReservation(Long storeId, Long memberId, String name, LocalDate date, Long timeId, Long themeId) {
         ReservationTime reservationTime = getReservationTime(timeId);
         Theme theme = getTheme(themeId);
-        return reservationRepository.save(Reservation.createNew(memberId, name, date, reservationTime, theme));
+        return reservationRepository.save(Reservation.createNew(storeId, memberId, name, date, reservationTime, theme));
     }
 
     private ReservationTime getReservationTime(Long timeId) {

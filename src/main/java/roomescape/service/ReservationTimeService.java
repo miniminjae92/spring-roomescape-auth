@@ -57,7 +57,7 @@ public class ReservationTimeService {
 
         List<ReservationTime> reservationTimes = reservationTimeRepository.findAll();
         ReservedTimes reservedTimes = new ReservedTimes(
-                reservationTimeRepository.findReservedTimeIds(condition.themeId(), condition.date())
+                reservationTimeRepository.findReservedTimeIds(condition.storeId(), condition.themeId(), condition.date())
         );
 
         List<AvailableReservationTimeResult> availableTimes = reservationTimes.stream()

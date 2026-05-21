@@ -23,6 +23,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import roomescape.domain.Member;
 import roomescape.domain.Theme;
 import roomescape.domain.ReservationTime;
+import roomescape.global.auth.SessionManager;
 import roomescape.util.ApiTestSupport;
 import roomescape.util.TestDataInitializer;
 
@@ -40,6 +41,7 @@ class ThemeApiTest extends ApiTestSupport {
     @DisplayName("테마를 추가한다.")
     void 테마를_등록한다() {
         // given
+        String managerSessionId = createManagerSession();
         Map<String, String> request = new HashMap<>();
         request.put("name", "귀신의 집");
         request.put("description", "무서워요");
@@ -47,9 +49,10 @@ class ThemeApiTest extends ApiTestSupport {
 
         // when
         ExtractableResponse<Response> response = RestAssured.given().log().all()
+                .cookie(SessionManager.SESSION_COOKIE_NAME, managerSessionId)
                 .contentType(ContentType.JSON)
                 .body(request)
-                .when().post("/themes")
+                .when().post("/admin/themes")
                 .then().log().all()
                 .extract();
 
@@ -87,12 +90,14 @@ class ThemeApiTest extends ApiTestSupport {
     @DisplayName("테마를 삭제한다.")
     void 테마를_삭제한다() {
         // given
+        String managerSessionId = createManagerSession();
         int themaId = createThemeHelper("삭제할 테마", "삭제될 예정입니다", "/images/themes/delete.webp");
 
         // when
         ExtractableResponse<Response> response = RestAssured.given().log().all()
+                .cookie(SessionManager.SESSION_COOKIE_NAME, managerSessionId)
                 .pathParam("id", themaId)
-                .when().delete("/themes/{id}")
+                .when().delete("/admin/themes/{id}")
                 .then().log().all()
                 .extract();
 
@@ -101,16 +106,7 @@ class ThemeApiTest extends ApiTestSupport {
     }
 
     private int createThemeHelper(String name, String description, String imagePath) {
-        Map<String, String> request = new HashMap<>();
-        request.put("name", name);
-        request.put("description", description);
-        request.put("imagePath", imagePath);
-
-        return RestAssured.given()
-                .contentType(ContentType.JSON)
-                .body(request)
-                .when().post("/themes")
-                .jsonPath().getInt("id");
+        return dataInitializer.createTheme(name, description, imagePath).getId().intValue();
     }
 
     @Test
@@ -187,5 +183,16 @@ class ThemeApiTest extends ApiTestSupport {
     private void createMemberReservation(String name, LocalDate date, Long timeId, Long themeId) {
         Member member = dataInitializer.createMember("member-" + name + "-" + date + "-" + timeId + "-" + themeId, "password", name);
         dataInitializer.createMemberReservation(member.getId(), member.getName(), date, timeId, themeId);
+    }
+
+    private String createManagerSession() {
+        Member manager = dataInitializer.createManager("manager", "password", "관리자");
+        dataInitializer.createStoreManager(1L, manager.getId());
+        return RestAssured.given()
+                .contentType(ContentType.JSON)
+                .body(Map.of("loginId", "manager", "password", "password"))
+                .when().post("/login/web")
+                .then().extract()
+                .cookie(SessionManager.SESSION_COOKIE_NAME);
     }
 }

@@ -40,12 +40,13 @@ public class ReservationTimeController {
 
     @GetMapping("/available")
     public ResponseEntity<AvailableReservationTimesResponse> getAvailableReservationTimes(
+            @RequestParam Long storeId,
             @RequestParam Long themeId,
             @RequestParam LocalDate date,
             @RequestParam(required = false) Boolean available
     ) {
         AvailableReservationTimesResult result = reservationTimeService.getAvailableReservationTimes(
-                AvailableReservationTimesQuery.toQuery(themeId, date, available).toCondition());
+                AvailableReservationTimesQuery.toQuery(storeId, themeId, date, available).toCondition());
         return ResponseEntity.ok(AvailableReservationTimesResponse.from(result));
     }
 

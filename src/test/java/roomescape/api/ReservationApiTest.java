@@ -138,6 +138,7 @@ class ReservationApiTest extends ApiTestSupport {
         dataInitializer.createTheme("귀신의집", "무서워요", "/images/themes/reservation.webp");
 
         Map<String, Object> params = new HashMap<>();
+        params.put("storeId", 1);
         params.put("date", TODAY.plusDays(1).toString());
         params.put("timeId", 1);
         params.put("themeId", 1);
@@ -158,6 +159,7 @@ class ReservationApiTest extends ApiTestSupport {
         createReservationPrerequisites(LocalTime.of(10, 0));
 
         Map<String, Object> params = new HashMap<>();
+        params.put("storeId", 1);
         params.put("date", TODAY.plusDays(1).toString());
         params.put("timeId", 1);
         params.put("themeId", 1);
@@ -188,6 +190,7 @@ class ReservationApiTest extends ApiTestSupport {
         createReservationPrerequisites(LocalTime.of(10, 0));
 
         Map<String, Object> params = new HashMap<>();
+        params.put("storeId", 1);
         params.put("date", TODAY.plusDays(2).toString());
         params.put("timeId", 1);
 
@@ -216,6 +219,7 @@ class ReservationApiTest extends ApiTestSupport {
         createReservationPrerequisites(LocalTime.of(10, 0));
 
         Map<String, Object> params = new HashMap<>();
+        params.put("storeId", 1);
         params.put("date", null);
         params.put("timeId", 1);
         params.put("themeId", 1);
@@ -233,6 +237,7 @@ class ReservationApiTest extends ApiTestSupport {
         createReservationPrerequisites(LocalTime.of(10, 0));
 
         Map<String, Object> params = new HashMap<>();
+        params.put("storeId", 1);
         params.put("date", "2026/05/20");
         params.put("timeId", 1);
         params.put("themeId", 1);
@@ -250,6 +255,7 @@ class ReservationApiTest extends ApiTestSupport {
         createReservationPrerequisites(LocalTime.of(10, 0));
 
         Map<String, Object> params = new HashMap<>();
+        params.put("storeId", 1);
         params.put("date", TODAY.plusDays(1).toString());
         params.put("timeId", null);
         params.put("themeId", 1);
@@ -267,6 +273,7 @@ class ReservationApiTest extends ApiTestSupport {
         createReservationPrerequisites(LocalTime.of(10, 0));
 
         Map<String, Object> params = new HashMap<>();
+        params.put("storeId", 1);
         params.put("date", TODAY.plusDays(1).toString());
         params.put("timeId", 1);
         params.put("themeId", null);
@@ -284,6 +291,7 @@ class ReservationApiTest extends ApiTestSupport {
         dataInitializer.createTheme("귀신의집", "무서워요", "/images/themes/reservation.webp");
 
         Map<String, Object> params = new HashMap<>();
+        params.put("storeId", 1);
         params.put("date", TODAY.plusDays(1).toString());
         params.put("timeId", 999);
         params.put("themeId", 1);
@@ -301,6 +309,7 @@ class ReservationApiTest extends ApiTestSupport {
         dataInitializer.createReservationTime(LocalTime.of(10, 0));
 
         Map<String, Object> params = new HashMap<>();
+        params.put("storeId", 1);
         params.put("date", TODAY.plusDays(1).toString());
         params.put("timeId", 1);
         params.put("themeId", 999);
@@ -320,6 +329,7 @@ class ReservationApiTest extends ApiTestSupport {
         createMemberReservation("고래", TODAY.plusDays(1), 1L, 1L);
 
         Map<String, Object> params = new HashMap<>();
+        params.put("storeId", 1);
         params.put("date", TODAY.plusDays(1).toString());
         params.put("timeId", 1);
         params.put("themeId", 1);
@@ -340,6 +350,7 @@ class ReservationApiTest extends ApiTestSupport {
         dataInitializer.createMemberReservation(loginMember.getId(), "고래", TODAY.plusDays(1), 1L, 1L);
 
         Map<String, Object> params = new HashMap<>();
+        params.put("storeId", 1);
         params.put("date", TODAY.plusDays(2).toString());
         params.put("timeId", 2);
 
@@ -392,6 +403,7 @@ class ReservationApiTest extends ApiTestSupport {
         createReservationPrerequisites(LocalTime.of(10, 0));
 
         Map<String, Object> params = new HashMap<>();
+        params.put("storeId", 1);
         params.put("date", TODAY.plusDays(2).toString());
         params.put("timeId", 1);
 
@@ -418,6 +430,7 @@ class ReservationApiTest extends ApiTestSupport {
         dataInitializer.createMemberReservation(otherMember.getId(), "상어", TODAY.plusDays(1), 1L, 1L);
 
         Map<String, Object> params = new HashMap<>();
+        params.put("storeId", 1);
         params.put("date", TODAY.plusDays(2).toString());
         params.put("timeId", 1);
 
@@ -439,6 +452,7 @@ class ReservationApiTest extends ApiTestSupport {
         createMemberReservation("라텔", TODAY.plusDays(1), 2L, 1L);
 
         Map<String, Object> params = new HashMap<>();
+        params.put("storeId", 1);
         params.put("date", TODAY.plusDays(1).toString());
         params.put("timeId", 2);
 
@@ -456,6 +470,7 @@ class ReservationApiTest extends ApiTestSupport {
         dataInitializer.createMemberReservation(loginMember.getId(), "고래", TODAY.plusDays(1), 1L, 1L);
 
         Map<String, Object> params = new HashMap<>();
+        params.put("storeId", 1);
         params.put("date", TODAY.plusDays(1).toString());
         params.put("timeId", 1);
 
@@ -473,6 +488,7 @@ class ReservationApiTest extends ApiTestSupport {
         dataInitializer.createMemberReservation(loginMember.getId(), "고래", TODAY.minusDays(1), 1L, 1L);
 
         Map<String, Object> params = new HashMap<>();
+        params.put("storeId", 1);
         params.put("date", TODAY.plusDays(1).toString());
         params.put("timeId", 1);
 
@@ -500,6 +516,7 @@ class ReservationApiTest extends ApiTestSupport {
         createCancelledReservation();
 
         Map<String, Object> params = new HashMap<>();
+        params.put("storeId", 1);
         params.put("date", TODAY.plusDays(2).toString());
         params.put("timeId", 1);
 
@@ -575,6 +592,7 @@ class ReservationApiTest extends ApiTestSupport {
             Long themeId
     ) {
         Map<String, Object> params = new HashMap<>();
+        params.put("storeId", 1);
         params.put("date", date.toString());
         params.put("timeId", timeId);
         params.put("themeId", themeId);

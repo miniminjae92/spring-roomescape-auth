@@ -14,23 +14,30 @@ public class Member {
     private final String loginId;
     private final String password;
     private final String name;
+    private final MemberRole role;
 
-    private Member(Long id, String loginId, String password, String name) {
+    private Member(Long id, String loginId, String password, String name, MemberRole role) {
         validateLoginId(loginId);
         validatePassword(password);
         validateName(name);
+        validateRole(role);
         this.id = id;
         this.loginId = loginId;
         this.password = password;
         this.name = name;
+        this.role = role;
     }
 
     public static Member createNew(String loginId, String password, String name) {
-        return new Member(null, loginId, password, name);
+        return new Member(null, loginId, password, name, MemberRole.USER);
     }
 
-    public static Member from(Long id, String loginId, String password, String name) {
-        return new Member(id, loginId, password, name);
+    public static Member createManager(String loginId, String password, String name) {
+        return new Member(null, loginId, password, name, MemberRole.MANAGER);
+    }
+
+    public static Member from(Long id, String loginId, String password, String name, MemberRole role) {
+        return new Member(id, loginId, password, name, role);
     }
 
     public boolean hasPassword(String password) {
@@ -61,6 +68,12 @@ public class Member {
         }
         if (!name.matches(NAME_PATTERN)) {
             throw new InvalidMemberException("이름은 완성형 한글, 영문, 공백만 허용합니다.");
+        }
+    }
+
+    private void validateRole(MemberRole role) {
+        if (role == null) {
+            throw new InvalidMemberException("회원 역할은 필수입니다.");
         }
     }
 }

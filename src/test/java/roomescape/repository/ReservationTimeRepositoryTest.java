@@ -40,7 +40,7 @@ class ReservationTimeRepositoryTest {
         createMemberReservation("사용자이", targetDate.plusDays(1), otherTime.getId(), targetTheme.getId());
         createMemberReservation("사용자삼", targetDate, otherTime.getId(), otherTheme.getId());
 
-        List<Long> reservedTimeIds = reservationTimeRepository.findReservedTimeIds(targetTheme.getId(), targetDate);
+        List<Long> reservedTimeIds = reservationTimeRepository.findReservedTimeIds(1L, targetTheme.getId(), targetDate);
 
         assertThat(reservedTimeIds).containsExactly(reservedTime.getId());
     }
@@ -50,6 +50,7 @@ class ReservationTimeRepositoryTest {
         Theme theme = dataInitializer.createTheme("빈 테마", "설명", "/images/themes/empty.webp");
 
         List<Long> reservedTimeIds = reservationTimeRepository.findReservedTimeIds(
+                1L,
                 theme.getId(),
                 LocalDate.of(2026, 5, 20)
         );
@@ -73,7 +74,7 @@ class ReservationTimeRepositoryTest {
         );
         reservationRepository.updateStatus(cancelledReservation.cancel());
 
-        List<Long> reservedTimeIds = reservationTimeRepository.findReservedTimeIds(theme.getId(), targetDate);
+        List<Long> reservedTimeIds = reservationTimeRepository.findReservedTimeIds(1L, theme.getId(), targetDate);
 
         assertThat(reservedTimeIds).containsExactly(reservedTime.getId());
     }

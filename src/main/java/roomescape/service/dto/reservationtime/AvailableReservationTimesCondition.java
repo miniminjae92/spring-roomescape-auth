@@ -4,12 +4,16 @@ import java.time.LocalDate;
 import roomescape.global.exception.reservationtime.InvalidReservationTimeException;
 
 public record AvailableReservationTimesCondition(
+        Long storeId,
         Long themeId,
         LocalDate date,
         Boolean available
 ) {
 
     public AvailableReservationTimesCondition {
+        if (storeId == null) {
+            throw new InvalidReservationTimeException("매장 ID는 필수입니다.");
+        }
         if (themeId == null) {
             throw new InvalidReservationTimeException("테마 ID는 필수입니다.");
         }

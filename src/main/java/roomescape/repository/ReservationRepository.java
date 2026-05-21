@@ -32,6 +32,7 @@ public class ReservationRepository {
         );
         return Reservation.from(
                 rs.getLong("id"),
+                rs.getLong("store_id"),
                 rs.getObject("member_id", Long.class),
                 rs.getString("name"),
                 rs.getObject("date", LocalDate.class),
@@ -48,7 +49,7 @@ public class ReservationRepository {
         this.jdbcTemplate = jdbcTemplate;
         this.simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate.getJdbcTemplate())
                 .withTableName("reservation")
-                .usingColumns("member_id", "name", "date", "time_id", "theme_id", "status")
+                .usingColumns("store_id", "member_id", "name", "date", "time_id", "theme_id", "status")
                 .usingGeneratedKeyColumns("id");
     }
 
@@ -56,6 +57,7 @@ public class ReservationRepository {
         String sql = """
                 SELECT
                     r.id,
+                    r.store_id,
                     r.member_id,
                     r.name,
                     r.date,
@@ -78,10 +80,43 @@ public class ReservationRepository {
         return jdbcTemplate.query(sql, parameters, reservationRowMapper);
     }
 
+    public List<Reservation> findAllByStoreIds(List<Long> storeIds, int size, int offset) {
+        if (storeIds.isEmpty()) {
+            return List.of();
+        }
+        String sql = """
+                SELECT
+                    r.id,
+                    r.store_id,
+                    r.member_id,
+                    r.name,
+                    r.date,
+                    r.status,
+                    rt.id AS time_id,
+                    rt.start_at AS time_start_at,
+                    t.id AS theme_id,
+                    t.name AS theme_name,
+                    t.description,
+                    t.image_path
+                FROM reservation r
+                INNER JOIN reservation_time rt ON r.time_id = rt.id
+                INNER JOIN theme t ON r.theme_id = t.id
+                WHERE r.store_id IN (:storeIds)
+                ORDER BY r.id
+                LIMIT :size OFFSET :offset
+                """;
+        SqlParameterSource parameters = new MapSqlParameterSource()
+                .addValue("storeIds", storeIds)
+                .addValue("size", size)
+                .addValue("offset", offset);
+        return jdbcTemplate.query(sql, parameters, reservationRowMapper);
+    }
+
     public List<Reservation> findAllByMemberId(Long memberId, int size, int offset) {
         String sql = """
                 SELECT
                     r.id,
+                    r.store_id,
                     r.member_id,
                     r.name,
                     r.date,
@@ -108,6 +143,7 @@ public class ReservationRepository {
 
     public Reservation save(Reservation reservation) {
         SqlParameterSource parameters = new MapSqlParameterSource()
+                .addValue("store_id", reservation.getStoreId())
                 .addValue("member_id", reservation.getMemberId())
                 .addValue("name", reservation.getName())
                 .addValue("date", reservation.getDate())
@@ -115,7 +151,7 @@ public class ReservationRepository {
                 .addValue("theme_id", reservation.getTheme().getId())
                 .addValue("status", reservation.getStatus().name());
         Long id = simpleJdbcInsert.executeAndReturnKey(parameters).longValue();
-        return Reservation.from(id, reservation.getMemberId(), reservation.getName(), reservation.getDate(), reservation.getTime(),
+        return Reservation.from(id, reservation.getStoreId(), reservation.getMemberId(), reservation.getName(), reservation.getDate(), reservation.getTime(),
                 reservation.getTheme(), reservation.getStatus());
     }
 
@@ -123,6 +159,7 @@ public class ReservationRepository {
         String sql = """
                 SELECT
                     r.id,
+                    r.store_id,
                     r.member_id,
                     r.name,
                     r.date,

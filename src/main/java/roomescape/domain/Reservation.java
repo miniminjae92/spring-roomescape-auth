@@ -15,18 +15,21 @@ public class Reservation {
     private static final String NAME_PATTERN = "^[가-힣a-zA-Z ]+$";
 
     private final Long id;
+    private final Long storeId;
     private final Long memberId;
     private final String name;
     private final ReservationSchedule schedule;
     private final Theme theme;
     private final ReservationStatus status;
 
-    private Reservation(Long id, Long memberId, String name, LocalDate date, ReservationTime time, Theme theme,
+    private Reservation(Long id, Long storeId, Long memberId, String name, LocalDate date, ReservationTime time, Theme theme,
                         ReservationStatus status) {
+        validateStoreId(storeId);
         validateMemberId(memberId);
         validateName(name);
         validateTheme(theme);
         this.id = id;
+        this.storeId = storeId;
         this.memberId = memberId;
         this.name = name;
         this.schedule = ReservationSchedule.of(date, time);
@@ -34,24 +37,25 @@ public class Reservation {
         this.status = status;
     }
 
-    public static Reservation createNew(Long memberId, String name, LocalDate date, ReservationTime time, Theme theme) {
-        return new Reservation(null, memberId, name, date, time, theme, ReservationStatus.RESERVED);
+    public static Reservation createNew(Long storeId, Long memberId, String name, LocalDate date, ReservationTime time,
+                                        Theme theme) {
+        return new Reservation(null, storeId, memberId, name, date, time, theme, ReservationStatus.RESERVED);
     }
 
-    public static Reservation from(Long id, Long memberId, String name, LocalDate date, ReservationTime time,
+    public static Reservation from(Long id, Long storeId, Long memberId, String name, LocalDate date, ReservationTime time,
                                    Theme theme, ReservationStatus status) {
-        return new Reservation(id, memberId, name, date, time, theme, status);
+        return new Reservation(id, storeId, memberId, name, date, time, theme, status);
     }
 
     public Reservation changeSchedule(LocalDate date, ReservationTime time) {
         validateReserved();
         validateDifferentSchedule(date, time);
-        return new Reservation(id, memberId, name, date, time, theme, status);
+        return new Reservation(id, storeId, memberId, name, date, time, theme, status);
     }
 
     public Reservation cancel() {
         validateReserved();
-        return new Reservation(id, memberId, name, getDate(), getTime(), theme, ReservationStatus.CANCELLED);
+        return new Reservation(id, storeId, memberId, name, getDate(), getTime(), theme, ReservationStatus.CANCELLED);
     }
 
     public boolean hasSameSchedule(LocalDate date, ReservationTime time) {
@@ -83,6 +87,12 @@ public class Reservation {
     private void validateMemberId(Long memberId) {
         if (memberId == null) {
             throw new InvalidReservationException("예약 회원은 필수입니다.");
+        }
+    }
+
+    private void validateStoreId(Long storeId) {
+        if (storeId == null) {
+            throw new InvalidReservationException("예약 매장은 필수입니다.");
         }
     }
 

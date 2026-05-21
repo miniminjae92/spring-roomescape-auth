@@ -19,6 +19,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.annotation.DirtiesContext;
 import roomescape.controller.ReservationController;
 import roomescape.controller.dto.reservation.ReservationResponse;
+import roomescape.domain.Member;
 import roomescape.global.auth.SessionManager;
 import roomescape.util.ApiTestSupport;
 import roomescape.util.TestDataInitializer;
@@ -66,14 +67,17 @@ class MissionStepTest extends ApiTestSupport {
         dataInitializer.createReservationTime(LocalTime.now());
         dataInitializer.createTheme("hello", "world", "/images/themes/hello.webp");
         dataInitializer.createMember("brown", "password", "브라운");
+        String managerSessionId = createManagerSession();
 
-        jdbcTemplate.update("INSERT INTO reservation (member_id, name, date, time_id, theme_id) VALUES (?, ?, ?, ?, ?)",
+        jdbcTemplate.update("INSERT INTO reservation (store_id, member_id, name, date, time_id, theme_id) VALUES (?, ?, ?, ?, ?, ?)",
+                1,
                 1,
                 "브라운",
                 "2023-08-05",
                 1, 1);
 
         List<ReservationResponse> reservations = RestAssured.given().log().all()
+                .cookie(SessionManager.SESSION_COOKIE_NAME, managerSessionId)
                 .when().get("/admin/reservations")
                 .then().log().all()
                 .statusCode(200).extract()
@@ -89,6 +93,7 @@ class MissionStepTest extends ApiTestSupport {
         dataInitializer.createReservationTime(LocalTime.now());
         dataInitializer.createTheme("hello", "world", "/images/themes/hello.webp");
         dataInitializer.createMember("brown", "password", "브라운");
+        String managerSessionId = createManagerSession();
         String sessionId = RestAssured.given().log().all()
                 .contentType(ContentType.JSON)
                 .body(Map.of("loginId", "brown", "password", "password"))
@@ -98,6 +103,7 @@ class MissionStepTest extends ApiTestSupport {
                 .extract().cookie(SessionManager.SESSION_COOKIE_NAME);
 
         Map<String, Object> params = new HashMap<>();
+        params.put("storeId", 1);
         params.put("date", LocalDate.now().plusDays(1).toString());
         params.put("timeId", 1);
         params.put("themeId", 1);
@@ -114,11 +120,23 @@ class MissionStepTest extends ApiTestSupport {
         assertThat(count).isEqualTo(1);
 
         RestAssured.given().log().all()
+                .cookie(SessionManager.SESSION_COOKIE_NAME, managerSessionId)
                 .when().delete("/admin/reservations/1")
                 .then().log().all()
                 .statusCode(204);
 
         Integer countAfterDelete = jdbcTemplate.queryForObject("SELECT count(1) from reservation", Integer.class);
         assertThat(countAfterDelete).isEqualTo(0);
+    }
+
+    private String createManagerSession() {
+        Member manager = dataInitializer.createManager("manager", "password", "관리자");
+        dataInitializer.createStoreManager(1L, manager.getId());
+        return RestAssured.given()
+                .contentType(ContentType.JSON)
+                .body(Map.of("loginId", "manager", "password", "password"))
+                .when().post("/login/web")
+                .then().extract()
+                .cookie(SessionManager.SESSION_COOKIE_NAME);
     }
 }

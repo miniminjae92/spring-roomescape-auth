@@ -20,8 +20,11 @@ import roomescape.global.exception.reservation.InvalidReservationException;
 import roomescape.global.exception.reservation.ReservationAccessDeniedException;
 import roomescape.global.exception.reservation.ReservationNotFoundException;
 import roomescape.global.exception.reservationtime.ReservationTimeNotFoundException;
+import roomescape.global.exception.store.StoreNotFoundException;
 import roomescape.global.exception.theme.ThemeNotFoundException;
 import roomescape.repository.ReservationRepository;
+import roomescape.repository.StoreManagerRepository;
+import roomescape.repository.StoreRepository;
 import roomescape.repository.ThemeRepository;
 import roomescape.repository.ReservationTimeRepository;
 import roomescape.service.dto.reservation.ReservationPagingCondition;
@@ -37,10 +40,19 @@ public class ReservationService {
     private final ReservationRepository reservationRepository;
     private final ReservationTimeRepository reservationTimeRepository;
     private final ThemeRepository themeRepository;
+    private final StoreManagerRepository storeManagerRepository;
+    private final StoreRepository storeRepository;
     private final Clock clock;
 
     public List<ReservationResult> getReservations(ReservationPagingCondition condition) {
         return reservationRepository.findAll(condition.size(), condition.offset()).stream()
+                .map(ReservationResult::from)
+                .toList();
+    }
+
+    public List<ReservationResult> getManagedReservations(Long managerId, ReservationPagingCondition condition) {
+        List<Long> storeIds = storeManagerRepository.findStoreIdsByMemberId(managerId);
+        return reservationRepository.findAllByStoreIds(storeIds, condition.size(), condition.offset()).stream()
                 .map(ReservationResult::from)
                 .toList();
     }
@@ -55,11 +67,13 @@ public class ReservationService {
     public ReservationResult createReservation(CreateReservationCommand command) {
         ReservationTime time = getReservationTime(command);
         Theme theme = getTheme(command);
+        validateStoreExists(command.storeId());
         validateReservableDateTime(command.date(), time);
-        validateAvailableSlot(theme.getId(), command.date(), time.getId());
+        validateAvailableSlot(command.storeId(), theme.getId(), command.date(), time.getId());
 
         Reservation reservation = reservationRepository.save(
                 Reservation.createNew(
+                        command.storeId(),
                         command.memberId(),
                         command.name(),
                         command.date(),
@@ -76,13 +90,21 @@ public class ReservationService {
     }
 
     @Transactional
+    public void deleteReservation(Long reservationId, Long managerId) {
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new ReservationNotFoundException("해당 예약을 찾을 수 없습니다."));
+        validateManageableReservation(reservation, managerId);
+        reservationRepository.deleteById(reservationId);
+    }
+
+    @Transactional
     public ReservationResult changeReservationSchedule(ChangeReservationScheduleCommand command) {
         Reservation reservation = getReservation(command.reservationId(), command.memberId());
         validateChangeableReservation(reservation);
         ReservationTime time = getReservationTime(command.timeId());
         validateReservableDateTime(command.date(), time);
 
-        validateAvailableSlot(reservation.getTheme().getId(), command.date(), time.getId());
+        validateAvailableSlot(reservation.getStoreId(), reservation.getTheme().getId(), command.date(), time.getId());
 
         Reservation changedReservation = reservation.changeSchedule(command.date(), time);
         return ReservationResult.from(reservationRepository.updateSchedule(changedReservation));
@@ -137,8 +159,16 @@ public class ReservationService {
         }
     }
 
-    private void validateAvailableSlot(Long themeId, LocalDate date, Long timeId) {
-        ReservedTimes reservedTimes = new ReservedTimes(reservationTimeRepository.findReservedTimeIds(themeId, date));
+    private void validateStoreExists(Long storeId) {
+        if (!storeRepository.existsById(storeId)) {
+            throw new StoreNotFoundException("선택한 매장이 존재하지 않습니다.");
+        }
+    }
+
+    private void validateAvailableSlot(Long storeId, Long themeId, LocalDate date, Long timeId) {
+        ReservedTimes reservedTimes = new ReservedTimes(
+                reservationTimeRepository.findReservedTimeIds(storeId, themeId, date)
+        );
         reservedTimes.validateAvailable(timeId);
     }
 
@@ -157,6 +187,12 @@ public class ReservationService {
 
         if (reservation.isExpired(today, now)) {
             throw new ExpiredReservationCancelException("지난 예약은 취소할 수 없습니다.");
+        }
+    }
+
+    private void validateManageableReservation(Reservation reservation, Long managerId) {
+        if (!storeManagerRepository.existsByStoreIdAndMemberId(reservation.getStoreId(), managerId)) {
+            throw new ReservationAccessDeniedException("접근 권한이 없습니다.");
         }
     }
 }

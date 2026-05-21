@@ -123,6 +123,7 @@ class ReservationTimeApiTest extends ApiTestSupport {
         createMemberReservation("라텔", date, ten.getId(), theme.getId());
 
         Map<String, Object> params = new HashMap<>();
+        params.put("storeId", 1);
         params.put("date", date.toString());
         params.put("timeId", ten.getId());
         params.put("themeId", theme.getId());
@@ -148,6 +149,7 @@ class ReservationTimeApiTest extends ApiTestSupport {
         createMemberReservation("라텔", date, ten.getId(), theme.getId());
 
         Map<String, Object> params = new HashMap<>();
+        params.put("storeId", 1);
         params.put("date", date.toString());
         params.put("themeId", theme.getId());
         params.put("available", false);
@@ -167,6 +169,7 @@ class ReservationTimeApiTest extends ApiTestSupport {
         dataInitializer.createReservationTime(LocalTime.of(10, 0));
 
         RestAssured.given().log().all()
+                .queryParam("storeId", 1)
                 .queryParam("date", LocalDate.now().plusDays(1).toString())
                 .queryParam("themeId", 999)
                 .when().get("/reservation-times/available")
@@ -201,6 +204,7 @@ class ReservationTimeApiTest extends ApiTestSupport {
         Theme theme = dataInitializer.createTheme("hello", "world", "/images/themes/hello.webp");
 
         RestAssured.given().log().all()
+                .queryParam("storeId", 1)
                 .queryParam("date", date)
                 .queryParam("themeId", theme.getId())
                 .when().get("/reservation-times/available")

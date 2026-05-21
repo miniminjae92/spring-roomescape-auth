@@ -6,6 +6,9 @@ import roomescape.global.auth.LoginMember;
 import roomescape.service.dto.reservation.CreateReservationCommand;
 
 public record ReservationRequest(
+        @NotNull(message = "매장은 필수입니다.")
+        Long storeId,
+
         @NotNull(message = "예약 날짜는 필수입니다.")
         LocalDate date,
 
@@ -18,6 +21,7 @@ public record ReservationRequest(
 
     public CreateReservationCommand toCommand(LoginMember loginMember) {
         return new CreateReservationCommand(
+                storeId,
                 loginMember.id(),
                 loginMember.name(),
                 date,

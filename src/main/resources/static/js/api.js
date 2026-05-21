@@ -67,7 +67,7 @@ export async function fetchRankedThemes(days, limit) {
 }
 
 export async function createTheme(payload) {
-    const res = await fetch('/themes', {
+    const res = await fetch('/admin/themes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -77,7 +77,7 @@ export async function createTheme(payload) {
 }
 
 export async function deleteTheme(id) {
-    const res = await fetch(`/themes/${id}`, { method: 'DELETE' });
+    const res = await fetch(`/admin/themes/${id}`, { method: 'DELETE' });
     if (!res.ok) throw new Error('Failed to delete theme');
     return res;
 }
@@ -89,8 +89,8 @@ export async function fetchReservationTimes() {
     return data.reservationTimes || data;
 }
 
-export async function fetchAvailableTimes(themeId, date) {
-    const res = await fetch(`/reservation-times/available?themeId=${themeId}&date=${date}`);
+export async function fetchAvailableTimes(storeId, themeId, date) {
+    const res = await fetch(`/reservation-times/available?storeId=${storeId}&themeId=${themeId}&date=${date}`);
     if (!res.ok) throw new Error('Failed to fetch available times');
     const data = await res.json();
     return data.availableTimes || data;

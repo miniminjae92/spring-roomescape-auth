@@ -35,7 +35,7 @@ public class AuthController {
             HttpServletResponse response
     ) {
         LoginResult result = authService.login(request.toCommand());
-        String sessionId = sessionManager.createSession(new LoginMember(result.id(), result.name()));
+        String sessionId = sessionManager.createSession(new LoginMember(result.id(), result.name(), result.role()));
         response.addHeader(HttpHeaders.SET_COOKIE, sessionManager.createSessionCookie(sessionId));
         return ResponseEntity.ok(LoginResponse.from(result));
     }
@@ -43,7 +43,7 @@ public class AuthController {
     @PostMapping("/login/mobile")
     public ResponseEntity<MobileLoginResponse> loginMobile(@Valid @RequestBody LoginRequest request) {
         LoginResult result = authService.login(request.toCommand());
-        String sessionId = sessionManager.createSession(new LoginMember(result.id(), result.name()));
+        String sessionId = sessionManager.createSession(new LoginMember(result.id(), result.name(), result.role()));
         return ResponseEntity.ok(new MobileLoginResponse(sessionId));
     }
 
@@ -53,7 +53,7 @@ public class AuthController {
             HttpServletResponse response
     ) {
         LoginResult result = authService.signup(request.toCommand());
-        String sessionId = sessionManager.createSession(new LoginMember(result.id(), result.name()));
+        String sessionId = sessionManager.createSession(new LoginMember(result.id(), result.name(), result.role()));
         response.addHeader(HttpHeaders.SET_COOKIE, sessionManager.createSessionCookie(sessionId));
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(LoginResponse.from(result));

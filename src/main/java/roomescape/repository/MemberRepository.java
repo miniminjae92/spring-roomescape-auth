@@ -8,6 +8,7 @@ import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
 import roomescape.domain.Member;
+import roomescape.domain.MemberRole;
 
 @Repository
 public class MemberRepository {
@@ -16,7 +17,8 @@ public class MemberRepository {
             rs.getLong("id"),
             rs.getString("login_id"),
             rs.getString("password"),
-            rs.getString("name")
+            rs.getString("name"),
+            MemberRole.valueOf(rs.getString("role"))
     );
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
@@ -26,7 +28,7 @@ public class MemberRepository {
         this.jdbcTemplate = jdbcTemplate;
         this.simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate.getJdbcTemplate())
                 .withTableName("member")
-                .usingColumns("login_id", "password", "name")
+                .usingColumns("login_id", "password", "name", "role")
                 .usingGeneratedKeyColumns("id");
     }
 
@@ -34,14 +36,15 @@ public class MemberRepository {
         SqlParameterSource parameters = new MapSqlParameterSource()
                 .addValue("login_id", member.getLoginId())
                 .addValue("password", member.getPassword())
-                .addValue("name", member.getName());
+                .addValue("name", member.getName())
+                .addValue("role", member.getRole().name());
         Long id = simpleJdbcInsert.executeAndReturnKey(parameters).longValue();
-        return Member.from(id, member.getLoginId(), member.getPassword(), member.getName());
+        return Member.from(id, member.getLoginId(), member.getPassword(), member.getName(), member.getRole());
     }
 
     public Optional<Member> findByLoginId(String loginId) {
         String sql = """
-                SELECT id, login_id, password, name
+                SELECT id, login_id, password, name, role
                 FROM member
                 WHERE login_id = :loginId
                 """;
@@ -54,7 +57,7 @@ public class MemberRepository {
 
     public Optional<Member> findById(Long id) {
         String sql = """
-                SELECT id, login_id, password, name
+                SELECT id, login_id, password, name, role
                 FROM member
                 WHERE id = :id
                 """;

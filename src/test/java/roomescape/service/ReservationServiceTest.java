@@ -26,6 +26,8 @@ import roomescape.global.exception.reservation.ReservationNotFoundException;
 import roomescape.global.exception.reservation.SameReservationScheduleException;
 import roomescape.repository.ReservationRepository;
 import roomescape.repository.ReservationTimeRepository;
+import roomescape.repository.StoreManagerRepository;
+import roomescape.repository.StoreRepository;
 import roomescape.repository.ThemeRepository;
 import roomescape.service.dto.reservation.CreateReservationCommand;
 import roomescape.service.dto.reservation.CancelReservationCommand;
@@ -41,6 +43,8 @@ class ReservationServiceTest {
     private ReservationRepository reservationRepository;
     private ReservationTimeRepository reservationTimeRepository;
     private ThemeRepository themeRepository;
+    private StoreManagerRepository storeManagerRepository;
+    private StoreRepository storeRepository;
     private ReservationService reservationService;
 
     @BeforeEach
@@ -48,10 +52,14 @@ class ReservationServiceTest {
         reservationRepository = mock(ReservationRepository.class);
         reservationTimeRepository = mock(ReservationTimeRepository.class);
         themeRepository = mock(ThemeRepository.class);
+        storeManagerRepository = mock(StoreManagerRepository.class);
+        storeRepository = mock(StoreRepository.class);
         reservationService = new ReservationService(
                 reservationRepository,
                 reservationTimeRepository,
                 themeRepository,
+                storeManagerRepository,
+                storeRepository,
                 FIXED_CLOCK
         );
     }
@@ -61,6 +69,7 @@ class ReservationServiceTest {
         stubReservationDependencies(LocalTime.of(15, 0));
 
         CreateReservationCommand command = new CreateReservationCommand(
+                1L,
                 1L,
                 "고래",
                 LocalDate.of(2026, 5, 14),
@@ -79,6 +88,7 @@ class ReservationServiceTest {
 
         CreateReservationCommand command = new CreateReservationCommand(
                 1L,
+                1L,
                 "고래",
                 LocalDate.of(2026, 5, 15),
                 1L,
@@ -96,6 +106,7 @@ class ReservationServiceTest {
 
         CreateReservationCommand command = new CreateReservationCommand(
                 1L,
+                1L,
                 "고래",
                 LocalDate.of(2026, 6, 15),
                 1L,
@@ -110,10 +121,11 @@ class ReservationServiceTest {
     @Test
     void 같은_날짜_시간_테마에_이미_예약이_있으면_중복_예약을_거부한다() {
         stubReservationDependencies(LocalTime.of(15, 0));
-        when(reservationTimeRepository.findReservedTimeIds(1L, LocalDate.of(2026, 5, 16)))
+        when(reservationTimeRepository.findReservedTimeIds(1L, 1L, LocalDate.of(2026, 5, 16)))
                 .thenReturn(List.of(1L));
 
         CreateReservationCommand command = new CreateReservationCommand(
+                1L,
                 1L,
                 "고래",
                 LocalDate.of(2026, 5, 16),
@@ -131,7 +143,7 @@ class ReservationServiceTest {
         ReservationTime targetTime = ReservationTime.from(2L, LocalTime.of(11, 0));
         when(reservationRepository.findById(1L)).thenReturn(Optional.of(reservation));
         when(reservationTimeRepository.findById(2L)).thenReturn(Optional.of(targetTime));
-        when(reservationTimeRepository.findReservedTimeIds(1L, LocalDate.of(2026, 5, 16)))
+        when(reservationTimeRepository.findReservedTimeIds(1L, 1L, LocalDate.of(2026, 5, 16)))
                 .thenReturn(List.of(1L, 2L));
 
         ChangeReservationScheduleCommand command = new ChangeReservationScheduleCommand(
@@ -225,10 +237,12 @@ class ReservationServiceTest {
         Theme theme = Theme.from(1L, "테마", "설명", "/images/themes/theme.webp");
         when(reservationTimeRepository.findById(1L)).thenReturn(Optional.of(time));
         when(themeRepository.findById(1L)).thenReturn(Optional.of(theme));
+        when(storeRepository.existsById(1L)).thenReturn(true);
     }
 
     private Reservation reservation() {
         return Reservation.from(
+                1L,
                 1L,
                 1L,
                 "고래",
@@ -241,6 +255,7 @@ class ReservationServiceTest {
 
     private Reservation pastReservation() {
         return Reservation.from(
+                1L,
                 1L,
                 1L,
                 "고래",
