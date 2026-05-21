@@ -58,14 +58,6 @@
             z-index: 10;
         }
 
-        .navbar a.admin-link {
-            color: var(--text-muted);
-            text-decoration: none;
-            font-weight: 800;
-            letter-spacing: 0.05em;
-            transition: color 0.3s;
-        }
-
         .navbar-right {
             display: inline-flex;
             align-items: center;
@@ -88,10 +80,6 @@
             font: inherit;
             font-weight: 700;
             cursor: pointer;
-        }
-
-        .navbar a.admin-link:hover {
-            color: var(--primary);
         }
 
         .logo {
@@ -283,7 +271,6 @@
         <div class="logo">ROOM ESCAPE</div>
         <div class="navbar-right">
             <span class="user-state" id="userStateLabel">비로그인</span>
-            <a href="/admin-reservation.html" class="admin-link">ADMIN</a>
             <a href="/auth.html" class="auth-link" id="authLink">로그인/회원가입</a>
             <button type="button" class="logout-button" id="logoutButton">로그아웃</button>
         </div>

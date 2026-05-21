@@ -20,7 +20,7 @@ import roomescape.service.dto.reservation.ReservationPagingCondition;
 @RestController
 @RequestMapping("/admin/reservations")
 @RequiredArgsConstructor
-@LoginRequired
+@LoginRequired(managerOnly = true)
 public class AdminReservationController {
 
     private final ReservationService reservationService;

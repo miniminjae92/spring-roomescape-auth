@@ -292,8 +292,8 @@ API 테스트는 클라이언트 관점에서 요청, 응답, 상태 코드, 에
 | --- | --- | --- | --- |
 | 예약 시간 목록 조회 | `GET` | `/reservation-times` | 등록된 모든 예약 시간을 조회한다. |
 | 예약 가능 시간 조회 | `GET` | `/reservation-times/available?themeId=1&date=2026-05-20` | 특정 날짜와 테마에 대한 예약 가능 시간을 조회한다. |
-| 예약 시간 등록 | `POST` | `/reservation-times` | 새로운 예약 시간을 등록한다. |
-| 예약 시간 삭제 | `DELETE` | `/reservation-times/{id}` | 특정 예약 시간을 삭제한다. |
+| 예약 시간 등록 | `POST` | `/admin/reservation-times` | 새로운 예약 시간을 등록한다. |
+| 예약 시간 삭제 | `DELETE` | `/admin/reservation-times/{id}` | 특정 예약 시간을 삭제한다. |
 
 ---
 

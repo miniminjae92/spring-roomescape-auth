@@ -21,25 +21,29 @@ public class AuthInterceptor implements HandlerInterceptor {
         if (!(handler instanceof HandlerMethod handlerMethod)) {
             return true;
         }
-        if (!requiresLogin(handlerMethod)) {
+        LoginRequired loginRequired = findLoginRequired(handlerMethod);
+        if (loginRequired == null) {
             return true;
         }
         LoginMember loginMember = sessionManager.findLoginMember(request)
                 .orElseThrow(() -> new AuthenticationRequiredException("인증이 필요합니다."));
-        if (requiresManagerRole(request, loginMember)) {
+        if (requiresManagerRole(request, loginRequired, loginMember)) {
             throw new AuthorizationFailedException("관리자 권한이 필요합니다.");
         }
         request.setAttribute(SessionManager.LOGIN_MEMBER_ATTRIBUTE, loginMember);
         return true;
     }
 
-    private boolean requiresLogin(HandlerMethod handlerMethod) {
-        return handlerMethod.hasMethodAnnotation(LoginRequired.class)
-                || handlerMethod.getBeanType().isAnnotationPresent(LoginRequired.class);
+    private LoginRequired findLoginRequired(HandlerMethod handlerMethod) {
+        LoginRequired methodAnnotation = handlerMethod.getMethodAnnotation(LoginRequired.class);
+        if (methodAnnotation != null) {
+            return methodAnnotation;
+        }
+        return handlerMethod.getBeanType().getAnnotation(LoginRequired.class);
     }
 
-    private boolean requiresManagerRole(HttpServletRequest request, LoginMember loginMember) {
-        return request.getRequestURI().startsWith("/admin/")
+    private boolean requiresManagerRole(HttpServletRequest request, LoginRequired loginRequired, LoginMember loginMember) {
+        return (request.getRequestURI().startsWith("/admin/") || loginRequired.managerOnly())
                 && loginMember.role() != MemberRole.MANAGER;
     }
 }

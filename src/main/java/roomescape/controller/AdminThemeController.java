@@ -19,7 +19,7 @@ import roomescape.service.dto.theme.ThemeResult;
 @RestController
 @RequestMapping("/admin/themes")
 @RequiredArgsConstructor
-@LoginRequired
+@LoginRequired(managerOnly = true)
 public class AdminThemeController {
 
     private final ThemeService themeService;

@@ -271,7 +271,7 @@
     </div>
 
 <script type="module">
-    import { fetchReservationTimes, createReservationTime, deleteReservationTime as apiDeleteTime } from '/js/api.js';
+    import { fetchReservationTimes, createReservationTime, deleteReservationTime as apiDeleteTime, requireManager } from '/js/api.js';
     import { showToast } from '/js/utils.js';
 
     const timeForm = document.getElementById('timeForm');
@@ -326,7 +326,10 @@
         }
     });
 
-    loadTimes();
+    const manager = await requireManager();
+    if (manager) {
+        loadTimes();
+    }
 </script>
 </body>
 </html>

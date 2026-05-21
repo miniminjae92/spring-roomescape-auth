@@ -1,27 +1,19 @@
 package roomescape.controller;
 
-import jakarta.validation.Valid;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import roomescape.controller.dto.reservationtime.AvailableReservationTimesQuery;
 import roomescape.controller.dto.reservationtime.AvailableReservationTimesResponse;
-import roomescape.controller.dto.reservationtime.ReservationTimeRequest;
 import roomescape.controller.dto.reservationtime.ReservationTimeResponse;
 import roomescape.controller.dto.reservationtime.ReservationTimeResponses;
 import roomescape.service.ReservationTimeService;
 import roomescape.service.dto.reservationtime.AvailableReservationTimesResult;
-import roomescape.service.dto.reservationtime.ReservationTimeResult;
 
 @RestController
 @RequestMapping("/reservation-times")
@@ -48,20 +40,5 @@ public class ReservationTimeController {
         AvailableReservationTimesResult result = reservationTimeService.getAvailableReservationTimes(
                 AvailableReservationTimesQuery.toQuery(storeId, themeId, date, available).toCondition());
         return ResponseEntity.ok(AvailableReservationTimesResponse.from(result));
-    }
-
-    @PostMapping
-    public ResponseEntity<ReservationTimeResponse> createReservationTime(
-            @Valid @RequestBody ReservationTimeRequest request) {
-        ReservationTimeResult reservationTimeResult = reservationTimeService.createReservationTime(request.toCommand());
-        ReservationTimeResponse reservationTime = ReservationTimeResponse.from(reservationTimeResult);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(reservationTime);
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteReservationTime(@PathVariable Long id) {
-        reservationTimeService.deleteReservationTime(id);
-        return ResponseEntity.noContent().build();
     }
 }

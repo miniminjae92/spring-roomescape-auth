@@ -48,6 +48,19 @@ export async function fetchMe() {
     return res.json();
 }
 
+export async function requireManager() {
+    const me = await fetchMe();
+    if (!me) {
+        window.location.href = `/auth.html?next=${encodeURIComponent(window.location.pathname)}`;
+        return null;
+    }
+    if (me.role !== 'MANAGER') {
+        window.location.href = '/';
+        return null;
+    }
+    return me;
+}
+
 export async function logout() {
     const res = await fetch('/logout', {
         method: 'POST',
@@ -97,7 +110,7 @@ export async function fetchAvailableTimes(storeId, themeId, date) {
 }
 
 export async function createReservationTime(startAt) {
-    const res = await fetch('/reservation-times', {
+    const res = await fetch('/admin/reservation-times', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ startAt })
@@ -110,7 +123,7 @@ export async function createReservationTime(startAt) {
 }
 
 export async function deleteReservationTime(id) {
-    const res = await fetch(`/reservation-times/${id}`, { method: 'DELETE' });
+    const res = await fetch(`/admin/reservation-times/${id}`, { method: 'DELETE' });
     if (!res.ok) throw new Error('Failed to delete time');
     return res;
 }

@@ -19,6 +19,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import roomescape.domain.Member;
 import roomescape.domain.Theme;
 import roomescape.domain.ReservationTime;
+import roomescape.global.auth.SessionManager;
 import roomescape.util.ApiTestSupport;
 import roomescape.util.TestDataInitializer;
 
@@ -31,13 +32,15 @@ class ReservationTimeApiTest extends ApiTestSupport {
 
     @Test
     void 예약_시간을_등록한다() {
+        String managerSessionId = createManagerSession();
         Map<String, String> params = new HashMap<>();
         params.put("startAt", "10:00");
 
         RestAssured.given().log().all()
+                .cookie(SessionManager.SESSION_COOKIE_NAME, managerSessionId)
                 .contentType(ContentType.JSON)
                 .body(params)
-                .when().post("/reservation-times")
+                .when().post("/admin/reservation-times")
                 .then().log().all()
                 .statusCode(201);
     }
@@ -55,30 +58,35 @@ class ReservationTimeApiTest extends ApiTestSupport {
 
     @Test
     void 예약_시간을_삭제한다() {
+        String managerSessionId = createManagerSession();
         dataInitializer.createReservationTime(LocalTime.of(10, 0));
 
         RestAssured.given().log().all()
-                .when().delete("/reservation-times/1")
+                .cookie(SessionManager.SESSION_COOKIE_NAME, managerSessionId)
+                .when().delete("/admin/reservation-times/1")
                 .then().log().all()
                 .statusCode(204);
     }
 
     @Test
     void 동일한_시작_시간을_중복_등록하면_409를_반환한다() {
+        String managerSessionId = createManagerSession();
         Map<String, String> params = new HashMap<>();
         params.put("startAt", "10:00");
 
         RestAssured.given().log().all()
+                .cookie(SessionManager.SESSION_COOKIE_NAME, managerSessionId)
                 .contentType(ContentType.JSON)
                 .body(params)
-                .when().post("/reservation-times")
+                .when().post("/admin/reservation-times")
                 .then().log().all()
                 .statusCode(201);
 
         RestAssured.given().log().all()
+                .cookie(SessionManager.SESSION_COOKIE_NAME, managerSessionId)
                 .contentType(ContentType.JSON)
                 .body(params)
-                .when().post("/reservation-times")
+                .when().post("/admin/reservation-times")
                 .then().log().all()
                 .statusCode(409);
     }
@@ -87,13 +95,15 @@ class ReservationTimeApiTest extends ApiTestSupport {
     @NullAndEmptySource
     @ValueSource(strings = {" ", "   "})
     void 예약_시작_시간이_null이거나_비어있으면_400을_반환한다(String startAt) {
+        String managerSessionId = createManagerSession();
         Map<String, String> params = new HashMap<>();
         params.put("startAt", startAt);
 
         RestAssured.given().log().all()
+                .cookie(SessionManager.SESSION_COOKIE_NAME, managerSessionId)
                 .contentType(ContentType.JSON)
                 .body(params)
-                .when().post("/reservation-times")
+                .when().post("/admin/reservation-times")
                 .then().log().all()
                 .statusCode(400);
     }
@@ -101,13 +111,15 @@ class ReservationTimeApiTest extends ApiTestSupport {
     @ParameterizedTest
     @ValueSource(strings = {"1000", "10:0", "10-00", "25:00"})
     void 예약_시작_시간_형식이_잘못되면_400을_반환한다(String startAt) {
+        String managerSessionId = createManagerSession();
         Map<String, String> params = new HashMap<>();
         params.put("startAt", startAt);
 
         RestAssured.given().log().all()
+                .cookie(SessionManager.SESSION_COOKIE_NAME, managerSessionId)
                 .contentType(ContentType.JSON)
                 .body(params)
-                .when().post("/reservation-times")
+                .when().post("/admin/reservation-times")
                 .then().log().all()
                 .statusCode(400);
     }
@@ -179,21 +191,26 @@ class ReservationTimeApiTest extends ApiTestSupport {
 
     @Test
     void 존재하지_않는_예약_시간을_삭제하면_404를_반환한다() {
+        String managerSessionId = createManagerSession();
+
         RestAssured.given().log().all()
-                .when().delete("/reservation-times/{id}", 999L)
+                .cookie(SessionManager.SESSION_COOKIE_NAME, managerSessionId)
+                .when().delete("/admin/reservation-times/{id}", 999L)
                 .then().log().all()
                 .statusCode(404);
     }
 
     @Test
     void 예약이_존재하는_시간을_삭제하면_409를_반환한다() {
+        String managerSessionId = createManagerSession();
         ReservationTime time = dataInitializer.createReservationTime(LocalTime.of(10, 0));
         Theme theme = dataInitializer.createTheme("hello", "world", "/images/themes/hello.webp");
         LocalDate date = LocalDate.now().plusDays(1);
         createMemberReservation("라텔", date, time.getId(), theme.getId());
 
         RestAssured.given().log().all()
-                .when().delete("/reservation-times/{id}", time.getId())
+                .cookie(SessionManager.SESSION_COOKIE_NAME, managerSessionId)
+                .when().delete("/admin/reservation-times/{id}", time.getId())
                 .then().log().all()
                 .statusCode(409);
     }
@@ -215,5 +232,15 @@ class ReservationTimeApiTest extends ApiTestSupport {
     private void createMemberReservation(String name, LocalDate date, Long timeId, Long themeId) {
         Member member = dataInitializer.createMember("member-" + name + "-" + date + "-" + timeId + "-" + themeId, "password", name);
         dataInitializer.createMemberReservation(member.getId(), member.getName(), date, timeId, themeId);
+    }
+
+    private String createManagerSession() {
+        dataInitializer.createManager("manager", "password", "관리자");
+        return RestAssured.given()
+                .contentType(ContentType.JSON)
+                .body(Map.of("loginId", "manager", "password", "password"))
+                .when().post("/login/web")
+                .then().extract()
+                .cookie(SessionManager.SESSION_COOKIE_NAME);
     }
 }

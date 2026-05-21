@@ -39,6 +39,32 @@ class AdminReservationApiTest extends ApiTestSupport {
     }
 
     @Test
+    void Authorization_헤더로_관리자_예약_목록을_조회한다() {
+        String managerSessionId = createManagerMobileSession();
+
+        RestAssured.given().log().all()
+                .header("Authorization", managerSessionId)
+                .when().get("/admin/reservations")
+                .then().log().all()
+                .statusCode(200)
+                .body("reservations.size()", is(0));
+    }
+
+    @Test
+    void 쿠키와_Authorization_헤더를_함께_전달하면_관리자_예약_목록을_조회할_수_없다() {
+        String cookieSessionId = createManagerSession();
+        String authorizationSessionId = loginMobile("manager", "password");
+
+        RestAssured.given().log().all()
+                .cookie(SessionManager.SESSION_COOKIE_NAME, cookieSessionId)
+                .header("Authorization", authorizationSessionId)
+                .when().get("/admin/reservations")
+                .then().log().all()
+                .statusCode(400)
+                .body("message", is("인증 정보는 하나만 전달해주세요."));
+    }
+
+    @Test
     void 예약을_하드_삭제한다() {
         String managerSessionId = createManagerSession();
         dataInitializer.createReservationTime(LocalTime.now());
@@ -156,6 +182,12 @@ class AdminReservationApiTest extends ApiTestSupport {
         return login("manager", "password");
     }
 
+    private String createManagerMobileSession() {
+        Member manager = dataInitializer.createManager("manager", "password", "관리자");
+        dataInitializer.createStoreManager(1L, manager.getId());
+        return loginMobile("manager", "password");
+    }
+
     private String createUserSession() {
         dataInitializer.createMember("user", "password", "사용자");
         return login("user", "password");
@@ -168,5 +200,14 @@ class AdminReservationApiTest extends ApiTestSupport {
                 .when().post("/login/web")
                 .then().extract()
                 .cookie(SessionManager.SESSION_COOKIE_NAME);
+    }
+
+    private String loginMobile(String loginId, String password) {
+        return RestAssured.given()
+                .contentType(ContentType.JSON)
+                .body(Map.of("loginId", loginId, "password", password))
+                .when().post("/login/mobile")
+                .then().extract()
+                .path("sessionId");
     }
 }

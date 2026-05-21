@@ -124,7 +124,7 @@
             letter-spacing: 0.05em;
         }
 
-        input[type="text"], input[type="url"], textarea {
+        input[type="text"], textarea {
             width: 100%;
             padding: 1rem;
             background: rgba(0, 0, 0, 0.3);
@@ -138,6 +138,15 @@
         }
 
         textarea { resize: vertical; min-height: 100px; }
+
+        .image-preview {
+            width: 100%;
+            height: 132px;
+            border-radius: 12px;
+            border: 1px solid var(--border-glass);
+            background: rgba(0, 0, 0, 0.3);
+            object-fit: cover;
+        }
 
         input:focus, textarea:focus {
             border-color: var(--primary);
@@ -253,8 +262,28 @@
                     <input type="text" id="nameInput" placeholder="테마 이름 입력" required>
                 </div>
                 <div class="form-group">
-                    <label>썸네일 이미지 URL</label>
-                    <input type="url" id="imageInput" placeholder="https://..." required>
+                    <label>썸네일 이미지 경로</label>
+                    <input type="text" id="imageInput" list="themeImageOptions" placeholder="/images/themes/wizard-room.webp" required>
+                    <datalist id="themeImageOptions">
+                        <option value="/images/themes/abandoned-hospital.webp"></option>
+                        <option value="/images/themes/ancient-ruins.webp"></option>
+                        <option value="/images/themes/cursed-doll-room.webp"></option>
+                        <option value="/images/themes/cursed-pirate-ship.webp"></option>
+                        <option value="/images/themes/detective-office.webp"></option>
+                        <option value="/images/themes/haunted-mansion.webp"></option>
+                        <option value="/images/themes/lost-city.webp"></option>
+                        <option value="/images/themes/lost-in-space.webp"></option>
+                        <option value="/images/themes/memory-lab.webp"></option>
+                        <option value="/images/themes/prison-break.webp"></option>
+                        <option value="/images/themes/secret-laboratory.webp"></option>
+                        <option value="/images/themes/spy-operation.webp"></option>
+                        <option value="/images/themes/underground-dungeon.webp"></option>
+                        <option value="/images/themes/vampire-castle.webp"></option>
+                        <option value="/images/themes/wizard-room.webp"></option>
+                    </datalist>
+                </div>
+                <div class="form-group full-width">
+                    <img id="imagePreview" class="image-preview" src="/images/themes/wizard-room.webp" alt="테마 이미지 미리보기">
                 </div>
                 <div class="form-group full-width">
                     <label>테마 설명</label>
@@ -287,11 +316,17 @@
     </div>
 
 <script type="module">
-    import { fetchThemes, createTheme, deleteTheme as apiDeleteTheme } from '/js/api.js';
+    import { fetchThemes, createTheme, deleteTheme as apiDeleteTheme, requireManager } from '/js/api.js';
     import { showToast } from '/js/utils.js';
 
     const themeForm = document.getElementById('themeForm');
     const themeList = document.getElementById('themeList');
+    const imageInput = document.getElementById('imageInput');
+    const imagePreview = document.getElementById('imagePreview');
+
+    function updateImagePreview() {
+        imagePreview.src = imageInput.value.trim() || '/images/themes/wizard-room.webp';
+    }
 
     window.deleteTheme = async (id) => {
         if (!confirm('정말로 이 테마를 삭제하시겠습니까?\n해당 테마와 연관된 예약이 있을 경우 삭제되지 않을 수 있습니다.')) return;
@@ -333,21 +368,31 @@
     themeForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const payload = {
-            name: document.getElementById('nameInput').value,
-            description: document.getElementById('descInput').value,
-            imagePath: document.getElementById('imageInput').value
+            name: document.getElementById('nameInput').value.trim(),
+            description: document.getElementById('descInput').value.trim(),
+            imagePath: imageInput.value.trim()
         };
+        if (!payload.imagePath.startsWith('/images/themes/')) {
+            showToast('이미지 경로는 /images/themes/로 시작해야 합니다.', 'error');
+            return;
+        }
         try {
             await createTheme(payload);
             showToast('새 테마가 등록되었습니다.', 'success');
             themeForm.reset();
+            updateImagePreview();
             loadThemes();
         } catch (e) {
             showToast('테마 추가에 실패했습니다.', 'error');
         }
     });
 
-    loadThemes();
+    imageInput.addEventListener('input', updateImagePreview);
+
+    const manager = await requireManager();
+    if (manager) {
+        loadThemes();
+    }
 </script>
 </body>
 </html>

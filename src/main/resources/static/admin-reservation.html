@@ -352,7 +352,7 @@
     </div>
 
 <script type="module">
-    import { fetchThemes, fetchReservationTimes, fetchAdminReservations, createReservation, deleteAdminReservation } from '/js/api.js';
+    import { fetchThemes, fetchReservationTimes, fetchAdminReservations, createReservation, deleteAdminReservation, requireManager } from '/js/api.js';
     import { showToast } from '/js/utils.js';
 
     const resForm = document.getElementById('resForm');
@@ -511,7 +511,10 @@
         }
     });
 
-    init();
+    const manager = await requireManager();
+    if (manager) {
+        init();
+    }
 </script>
 </body>
 </html>
