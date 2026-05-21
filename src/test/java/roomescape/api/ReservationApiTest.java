@@ -37,7 +37,7 @@ class ReservationApiTest extends ApiTestSupport {
         String sessionId = RestAssured.given()
                 .contentType(ContentType.JSON)
                 .body(loginParams("whale", "password"))
-                .when().post("/login")
+                .when().post("/login/web")
                 .then().extract()
                 .cookie(SessionManager.SESSION_COOKIE_NAME);
         RestAssured.requestSpecification = new RequestSpecBuilder()
@@ -62,7 +62,7 @@ class ReservationApiTest extends ApiTestSupport {
     }
 
     @Test
-    void Authorization_Bearer_헤더로도_예약_목록을_조회할_수_있다() {
+    void Authorization_헤더로도_예약_목록을_조회할_수_있다() {
         RestAssured.requestSpecification = null;
         dataInitializer.createReservationTime(LocalTime.of(10, 0));
         dataInitializer.createTheme("귀신의집", "무서워요", "/images/themes/reservation.webp");
@@ -71,17 +71,45 @@ class ReservationApiTest extends ApiTestSupport {
         String sessionId = RestAssured.given()
                 .contentType(ContentType.JSON)
                 .body(loginParams("whale", "password"))
-                .when().post("/login")
+                .when().post("/login/mobile")
                 .then().extract()
-                .cookie(SessionManager.SESSION_COOKIE_NAME);
+                .path("sessionId");
 
         RestAssured.given().log().all()
-                .header("Authorization", "Bearer " + sessionId)
+                .header("Authorization", sessionId)
                 .when().get("/reservations")
                 .then().log().all()
                 .statusCode(200)
                 .body("reservations.size()", is(1))
                 .body("reservations[0].name", is("고래"));
+    }
+
+    @Test
+    void Cookie와_Authorization이_함께_오면_400을_반환한다() {
+        RestAssured.requestSpecification = null;
+        dataInitializer.createReservationTime(LocalTime.of(10, 0));
+        dataInitializer.createTheme("귀신의집", "무서워요", "/images/themes/reservation.webp");
+
+        String cookieSessionId = RestAssured.given()
+                .contentType(ContentType.JSON)
+                .body(loginParams("whale", "password"))
+                .when().post("/login/web")
+                .then().extract()
+                .cookie(SessionManager.SESSION_COOKIE_NAME);
+        String authorizationSessionId = RestAssured.given()
+                .contentType(ContentType.JSON)
+                .body(loginParams("whale", "password"))
+                .when().post("/login/mobile")
+                .then().extract()
+                .path("sessionId");
+
+        RestAssured.given().log().all()
+                .cookie(SessionManager.SESSION_COOKIE_NAME, cookieSessionId)
+                .header("Authorization", authorizationSessionId)
+                .when().get("/reservations")
+                .then().log().all()
+                .statusCode(400)
+                .body("message", is("인증 정보는 하나만 전달해주세요."));
     }
 
     @Test
@@ -166,7 +194,7 @@ class ReservationApiTest extends ApiTestSupport {
         RestAssured.given().log().all()
                 .contentType(ContentType.JSON)
                 .body(params)
-                .when().put("/reservations/1/schedule")
+                .when().patch("/reservations/1")
                 .then().log().all()
                 .statusCode(401)
                 .body("message", is("인증이 필요합니다."));
@@ -177,7 +205,7 @@ class ReservationApiTest extends ApiTestSupport {
         RestAssured.requestSpecification = null;
 
         RestAssured.given().log().all()
-                .when().post("/reservations/1/cancellations")
+                .when().delete("/reservations/1")
                 .then().log().all()
                 .statusCode(401)
                 .body("message", is("인증이 필요합니다."));
@@ -318,7 +346,7 @@ class ReservationApiTest extends ApiTestSupport {
         RestAssured.given().log().all()
                 .contentType(ContentType.JSON)
                 .body(params)
-                .when().put("/reservations/1/schedule")
+                .when().patch("/reservations/1")
                 .then().log().all()
                 .statusCode(200)
                 .body("date", is(TODAY.plusDays(2).toString()))
@@ -334,7 +362,7 @@ class ReservationApiTest extends ApiTestSupport {
         dataInitializer.createMemberReservation(loginMember.getId(), "고래", TODAY.plusDays(1), 1L, 1L);
 
         RestAssured.given().log().all()
-                .when().post("/reservations/1/cancellations")
+                .when().delete("/reservations/1")
                 .then().log().all()
                 .statusCode(200)
                 .body("status", is("CANCELLED"));
@@ -346,7 +374,7 @@ class ReservationApiTest extends ApiTestSupport {
         dataInitializer.createMemberReservation(loginMember.getId(), "고래", TODAY.plusDays(1), 1L, 1L);
 
         RestAssured.given().log().all()
-                .when().post("/reservations/1/cancellations")
+                .when().delete("/reservations/1")
                 .then().log().all()
                 .statusCode(200)
                 .body("status", is("CANCELLED"));
@@ -370,7 +398,7 @@ class ReservationApiTest extends ApiTestSupport {
         RestAssured.given().log().all()
                 .contentType(ContentType.JSON)
                 .body(params)
-                .when().put("/reservations/999/schedule")
+                .when().patch("/reservations/999")
                 .then().log().all()
                 .statusCode(404);
     }
@@ -378,7 +406,7 @@ class ReservationApiTest extends ApiTestSupport {
     @Test
     void 존재하지_않는_예약을_취소하면_404를_반환한다() {
         RestAssured.given().log().all()
-                .when().post("/reservations/999/cancellations")
+                .when().delete("/reservations/999")
                 .then().log().all()
                 .statusCode(404);
     }
@@ -396,7 +424,7 @@ class ReservationApiTest extends ApiTestSupport {
         RestAssured.given().log().all()
                 .contentType(ContentType.JSON)
                 .body(params)
-                .when().put("/reservations/1/schedule")
+                .when().patch("/reservations/1")
                 .then().log().all()
                 .statusCode(403)
                 .body("message", is("접근 권한이 없습니다."));
@@ -417,7 +445,7 @@ class ReservationApiTest extends ApiTestSupport {
         RestAssured.given().log().all()
                 .contentType(ContentType.JSON)
                 .body(params)
-                .when().put("/reservations/1/schedule")
+                .when().patch("/reservations/1")
                 .then().log().all()
                 .statusCode(409);
     }
@@ -434,7 +462,7 @@ class ReservationApiTest extends ApiTestSupport {
         RestAssured.given().log().all()
                 .contentType(ContentType.JSON)
                 .body(params)
-                .when().put("/reservations/1/schedule")
+                .when().patch("/reservations/1")
                 .then().log().all()
                 .statusCode(409);
     }
@@ -451,7 +479,7 @@ class ReservationApiTest extends ApiTestSupport {
         RestAssured.given().log().all()
                 .contentType(ContentType.JSON)
                 .body(params)
-                .when().put("/reservations/1/schedule")
+                .when().patch("/reservations/1")
                 .then().log().all()
                 .statusCode(409);
     }
@@ -462,7 +490,7 @@ class ReservationApiTest extends ApiTestSupport {
         dataInitializer.createMemberReservation(loginMember.getId(), "고래", TODAY.minusDays(1), 1L, 1L);
 
         RestAssured.given().log().all()
-                .when().post("/reservations/1/cancellations")
+                .when().delete("/reservations/1")
                 .then().log().all()
                 .statusCode(409);
     }
@@ -478,7 +506,7 @@ class ReservationApiTest extends ApiTestSupport {
         RestAssured.given().log().all()
                 .contentType(ContentType.JSON)
                 .body(params)
-                .when().put("/reservations/1/schedule")
+                .when().patch("/reservations/1")
                 .then().log().all()
                 .statusCode(409);
     }
@@ -488,7 +516,7 @@ class ReservationApiTest extends ApiTestSupport {
         createCancelledReservation();
 
         RestAssured.given().log().all()
-                .when().post("/reservations/1/cancellations")
+                .when().delete("/reservations/1")
                 .then().log().all()
                 .statusCode(409);
     }
@@ -537,7 +565,7 @@ class ReservationApiTest extends ApiTestSupport {
         createReservationPrerequisites(LocalTime.of(10, 0));
         dataInitializer.createMemberReservation(loginMember.getId(), "고래", TODAY.plusDays(1), 1L, 1L);
         RestAssured.given()
-                .when().post("/reservations/1/cancellations")
+                .when().delete("/reservations/1")
                 .then().statusCode(200);
     }
 

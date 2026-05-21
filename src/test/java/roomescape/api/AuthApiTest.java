@@ -1,8 +1,10 @@
 package roomescape.api;
 
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.startsWith;
+import static org.hamcrest.Matchers.nullValue;
 
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
@@ -30,12 +32,32 @@ class AuthApiTest extends ApiTestSupport {
         RestAssured.given().log().all()
                 .contentType(ContentType.JSON)
                 .body(loginParams("whale", "password"))
-                .when().post("/login")
+                .when().post("/login/web")
                 .then().log().all()
                 .statusCode(200)
                 .cookie(SessionManager.SESSION_COOKIE_NAME, notNullValue())
-                .header("Authorization", startsWith("Bearer "))
+                .header("Set-Cookie", allOf(
+                        containsString("HttpOnly"),
+                        containsString("Secure"),
+                        containsString("SameSite=Lax")
+                ))
+                .header("Authorization", nullValue())
                 .body("name", is("고래"));
+    }
+
+    @Test
+    void 모바일_로그인은_세션_ID를_응답_본문에_담아_반환한다() {
+        dataInitializer.createMember("whale", "password", "고래");
+
+        RestAssured.given().log().all()
+                .contentType(ContentType.JSON)
+                .body(loginParams("whale", "password"))
+                .when().post("/login/mobile")
+                .then().log().all()
+                .statusCode(200)
+                .header("Set-Cookie", nullValue())
+                .header("Authorization", nullValue())
+                .body("sessionId", notNullValue());
     }
 
     @Test
@@ -47,7 +69,7 @@ class AuthApiTest extends ApiTestSupport {
                 .then().log().all()
                 .statusCode(201)
                 .cookie(SessionManager.SESSION_COOKIE_NAME, notNullValue())
-                .header("Authorization", startsWith("Bearer "))
+                .header("Authorization", nullValue())
                 .body("loginId", is("whale"))
                 .body("name", is("고래"));
     }
@@ -72,7 +94,7 @@ class AuthApiTest extends ApiTestSupport {
         RestAssured.given().log().all()
                 .contentType(ContentType.JSON)
                 .body(loginParams("shark", "password"))
-                .when().post("/login")
+                .when().post("/login/web")
                 .then().log().all()
                 .statusCode(401)
                 .body("message", is("잘못된 정보입니다. 다시 시도해주세요."));
@@ -85,7 +107,7 @@ class AuthApiTest extends ApiTestSupport {
         RestAssured.given().log().all()
                 .contentType(ContentType.JSON)
                 .body(loginParams("whale", "wrong"))
-                .when().post("/login")
+                .when().post("/login/web")
                 .then().log().all()
                 .statusCode(401)
                 .body("message", is("잘못된 정보입니다. 다시 시도해주세요."));
@@ -97,7 +119,7 @@ class AuthApiTest extends ApiTestSupport {
         String sessionId = RestAssured.given()
                 .contentType(ContentType.JSON)
                 .body(loginParams("whale", "password"))
-                .when().post("/login")
+                .when().post("/login/web")
                 .then().extract().cookie(SessionManager.SESSION_COOKIE_NAME);
 
         RestAssured.given().log().all()

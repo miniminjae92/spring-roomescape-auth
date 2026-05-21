@@ -6,7 +6,7 @@ export async function fetchThemes() {
 }
 
 export async function login(payload) {
-    const res = await fetch('/login', {
+    const res = await fetch('/login/web', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'same-origin',
@@ -142,8 +142,8 @@ export async function fetchMyReservations(page = 0, size = 20) {
 }
 
 export async function updateReservationSchedule(id, payload) {
-    const res = await fetch(`/reservations/${id}/schedule`, {
-        method: 'PUT',
+    const res = await fetch(`/reservations/${id}`, {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'same-origin',
         body: JSON.stringify(payload)
@@ -156,8 +156,8 @@ export async function updateReservationSchedule(id, payload) {
 }
 
 export async function cancelMyReservation(id) {
-    const res = await fetch(`/reservations/${id}/cancellations`, {
-        method: 'POST',
+    const res = await fetch(`/reservations/${id}`, {
+        method: 'DELETE',
         credentials: 'same-origin'
     });
     if (!res.ok) {

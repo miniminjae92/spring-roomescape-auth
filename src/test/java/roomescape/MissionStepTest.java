@@ -92,7 +92,7 @@ class MissionStepTest extends ApiTestSupport {
         String sessionId = RestAssured.given().log().all()
                 .contentType(ContentType.JSON)
                 .body(Map.of("loginId", "brown", "password", "password"))
-                .when().post("/login")
+                .when().post("/login/web")
                 .then().log().all()
                 .statusCode(200)
                 .extract().cookie(SessionManager.SESSION_COOKIE_NAME);

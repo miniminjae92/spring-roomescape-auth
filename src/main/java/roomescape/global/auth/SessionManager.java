@@ -4,7 +4,9 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.Optional;
+import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Component;
+import roomescape.global.exception.auth.DuplicateAuthenticationException;
 
 @Component
 public class SessionManager {
@@ -12,7 +14,6 @@ public class SessionManager {
     public static final String SESSION_COOKIE_NAME = "SESSION";
     public static final String LOGIN_MEMBER_ATTRIBUTE = "loginMember";
     private static final String AUTHORIZATION_HEADER = "Authorization";
-    private static final String BEARER_PREFIX = "Bearer ";
 
     private final SessionStore sessionStore;
 
@@ -20,13 +21,18 @@ public class SessionManager {
         this.sessionStore = sessionStore;
     }
 
-    public Cookie createSession(LoginMember loginMember) {
-        String sessionId = sessionStore.create(loginMember);
+    public String createSession(LoginMember loginMember) {
+        return sessionStore.create(loginMember);
+    }
 
-        Cookie cookie = new Cookie(SESSION_COOKIE_NAME, sessionId);
-        cookie.setHttpOnly(true);
-        cookie.setPath("/");
-        return cookie;
+    public String createSessionCookie(String sessionId) {
+        return ResponseCookie.from(SESSION_COOKIE_NAME, sessionId)
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("Lax")
+                .path("/")
+                .build()
+                .toString();
     }
 
     public Optional<LoginMember> findLoginMember(HttpServletRequest request) {
@@ -38,12 +44,15 @@ public class SessionManager {
         return extractSessionId(request);
     }
 
-    public Cookie expireSessionCookie() {
-        Cookie cookie = new Cookie(SESSION_COOKIE_NAME, "");
-        cookie.setPath("/");
-        cookie.setMaxAge(0);
-        cookie.setHttpOnly(true);
-        return cookie;
+    public String expireSessionCookie() {
+        return ResponseCookie.from(SESSION_COOKIE_NAME, "")
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("Lax")
+                .path("/")
+                .maxAge(0)
+                .build()
+                .toString();
     }
 
     public void invalidate(HttpServletRequest request) {
@@ -51,23 +60,21 @@ public class SessionManager {
     }
 
     private Optional<String> extractSessionId(HttpServletRequest request) {
-        Optional<String> authorizationSessionId = extractBearerSessionId(request);
-        if (authorizationSessionId.isPresent()) {
-            return authorizationSessionId;
+        Optional<String> authorizationSessionId = extractAuthorizationSessionId(request);
+        Optional<String> cookieSessionId = extractCookieSessionId(request);
+        if (authorizationSessionId.isPresent() && cookieSessionId.isPresent()) {
+            throw new DuplicateAuthenticationException("인증 정보는 하나만 전달해주세요.");
         }
 
-        return extractCookieSessionId(request);
+        return authorizationSessionId.or(() -> cookieSessionId);
     }
 
-    private Optional<String> extractBearerSessionId(HttpServletRequest request) {
+    private Optional<String> extractAuthorizationSessionId(HttpServletRequest request) {
         String authorization = request.getHeader(AUTHORIZATION_HEADER);
         if (authorization == null || authorization.isBlank()) {
             return Optional.empty();
         }
-        if (!authorization.startsWith(BEARER_PREFIX)) {
-            return Optional.empty();
-        }
-        String sessionId = authorization.substring(BEARER_PREFIX.length()).trim();
+        String sessionId = authorization.trim();
         if (sessionId.isBlank()) {
             return Optional.empty();
         }
