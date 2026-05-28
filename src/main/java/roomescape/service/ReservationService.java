@@ -44,12 +44,6 @@ public class ReservationService {
     private final StoreRepository storeRepository;
     private final Clock clock;
 
-    public List<ReservationResult> getReservations(ReservationPagingCondition condition) {
-        return reservationRepository.findAll(condition.size(), condition.offset()).stream()
-                .map(ReservationResult::from)
-                .toList();
-    }
-
     public List<ReservationResult> getManagedReservations(Long managerId, ReservationPagingCondition condition) {
         List<Long> storeIds = storeManagerRepository.findStoreIdsByMemberId(managerId);
         return reservationRepository.findAllByStoreIds(storeIds, condition.size(), condition.offset()).stream()

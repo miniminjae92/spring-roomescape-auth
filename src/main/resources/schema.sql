@@ -22,9 +22,6 @@ CREATE TABLE store
     PRIMARY KEY (id)
 );
 
-INSERT INTO store (name)
-VALUES ('강남점');
-
 CREATE TABLE member
 (
     id       BIGINT       NOT NULL AUTO_INCREMENT,

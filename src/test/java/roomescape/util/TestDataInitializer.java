@@ -47,7 +47,7 @@ public class TestDataInitializer {
     }
 
     public Member createMember(String loginId, String password, String name) {
-        return memberRepository.save(Member.createNew(loginId, password, name));
+        return memberRepository.save(Member.createUser(loginId, password, name));
     }
 
     public Member createManager(String loginId, String password, String name) {

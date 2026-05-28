@@ -28,7 +28,7 @@ public class Member {
         this.role = role;
     }
 
-    public static Member createNew(String loginId, String password, String name) {
+    public static Member createUser(String loginId, String password, String name) {
         return new Member(null, loginId, password, name, MemberRole.USER);
     }
 
@@ -40,7 +40,7 @@ public class Member {
         return new Member(id, loginId, password, name, role);
     }
 
-    public boolean hasPassword(String password) {
+    public boolean matchesPassword(String password) {
         return this.password.equals(password);
     }
 

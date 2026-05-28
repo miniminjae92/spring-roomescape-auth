@@ -28,7 +28,7 @@ public class AuthService {
         if (memberRepository.findByLoginId(command.loginId()).isPresent()) {
             throw new DuplicateMemberException("이미 가입된 로그인 ID입니다.");
         }
-        Member member = memberRepository.save(Member.createNew(command.loginId(), command.password(), command.name()));
+        Member member = memberRepository.save(Member.createUser(command.loginId(), command.password(), command.name()));
         return LoginResult.from(member);
     }
 
@@ -39,7 +39,7 @@ public class AuthService {
     }
 
     private void validatePassword(Member member, String password) {
-        if (!member.hasPassword(password)) {
+        if (!member.matchesPassword(password)) {
             throw new LoginFailedException("잘못된 정보입니다. 다시 시도해주세요.");
         }
     }

@@ -18,7 +18,7 @@ class MemberRepositoryTest {
 
     @Test
     void 로그인_ID로_회원을_조회한다() {
-        Member savedMember = memberRepository.save(Member.createNew("whale", "password", "고래"));
+        Member savedMember = memberRepository.save(Member.createUser("whale", "password", "고래"));
 
         Optional<Member> member = memberRepository.findByLoginId("whale");
 
@@ -29,7 +29,7 @@ class MemberRepositoryTest {
 
     @Test
     void 로그인_ID에_해당하는_회원이_없으면_빈_값을_반환한다() {
-        memberRepository.save(Member.createNew("whale", "password", "고래"));
+        memberRepository.save(Member.createUser("whale", "password", "고래"));
 
         Optional<Member> member = memberRepository.findByLoginId("shark");
 
@@ -38,7 +38,7 @@ class MemberRepositoryTest {
 
     @Test
     void 식별자로_회원을_조회한다() {
-        Member savedMember = memberRepository.save(Member.createNew("whale", "password", "고래"));
+        Member savedMember = memberRepository.save(Member.createUser("whale", "password", "고래"));
 
         Optional<Member> member = memberRepository.findById(savedMember.getId());
 
