@@ -298,7 +298,7 @@
     </div>
 
 <script type="module">
-    import { fetchThemes, fetchAvailableTimes, createReservation } from '/js/api.js';
+    import { fetchThemes, fetchAvailableTimes, createReservation, createWaitingReservation } from '/js/api.js';
     import { showToast } from '/js/utils.js';
 
     const dateInput = document.getElementById('dateInput');
@@ -312,6 +312,7 @@
     let selectedDate = '';
     let selectedThemeId = null;
     let selectedTimeId = null;
+    let selectedTimeAvailable = true;
 
     // Set min date to today local time
     const offset = new Date().getTimezoneOffset() * 60000;
@@ -382,13 +383,8 @@
                 const btn = document.createElement('button');
                 btn.className = 'btn-card';
 
-                if (!time.available) {
-                    btn.disabled = true;
-                    btn.innerHTML = `${time.startAt}<br><span style="font-size:0.7rem; font-weight:normal; color:#94a3b8;">예약마감</span>`;
-                } else {
-                    btn.textContent = time.startAt;
-                    btn.onclick = () => selectTime(time.id, btn);
-                }
+                btn.innerHTML = `${time.startAt}<br><span style="font-size:0.7rem; font-weight:normal; color:#94a3b8;">${time.available ? '예약 가능' : '대기 가능'}</span>`;
+                btn.onclick = () => selectTime(time.id, time.available, btn);
                 timeList.appendChild(btn);
             });
         } catch (e) {
@@ -397,10 +393,12 @@
         }
     }
 
-    function selectTime(timeId, clickedBtn) {
+    function selectTime(timeId, available, clickedBtn) {
         selectedTimeId = timeId;
+        selectedTimeAvailable = available;
         document.querySelectorAll('#timeList .btn-card').forEach(b => b.classList.remove('selected'));
         clickedBtn.classList.add('selected');
+        reserveBtn.textContent = available ? '예약 확정하기' : '예약 대기 신청하기';
 
         step4.classList.remove('disabled');
         step4.classList.add('active');
@@ -418,15 +416,20 @@
         reserveBtn.textContent = '예약 요청을 보내는 중...';
 
         try {
-            await createReservation(payload);
-            showToast('🎉 예약이 완료되었습니다! 현장에서 뵙겠습니다.', 'success');
+            if (selectedTimeAvailable) {
+                await createReservation(payload);
+                showToast('예약이 완료되었습니다.', 'success');
+            } else {
+                await createWaitingReservation(payload);
+                showToast('예약 대기 신청이 완료되었습니다.', 'success');
+            }
             setTimeout(() => window.location.href = '/my-reservation.html', 1500);
         } catch (e) {
             showToast(e.message || '예약 처리에 실패했습니다.', 'error');
             loadAvailableTimes();
         } finally {
             reserveBtn.disabled = false;
-            reserveBtn.textContent = '예약 확정하기';
+            reserveBtn.textContent = selectedTimeAvailable ? '예약 확정하기' : '예약 대기 신청하기';
         }
     });
 </script>

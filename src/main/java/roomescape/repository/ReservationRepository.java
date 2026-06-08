@@ -11,6 +11,7 @@ import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
 import roomescape.domain.Reservation;
+import roomescape.domain.ReservationSlot;
 import roomescape.domain.ReservationTime;
 import roomescape.domain.ReservationStatus;
 import roomescape.domain.Theme;
@@ -182,31 +183,112 @@ public class ReservationRepository {
                 .findFirst();
     }
 
+    public Optional<Reservation> findByIdForUpdate(Long id) {
+        String sql = """
+                SELECT
+                    r.id,
+                    r.store_id,
+                    r.member_id,
+                    r.name,
+                    r.date,
+                    r.status,
+                    rt.id AS time_id,
+                    rt.start_at AS time_start_at,
+                    t.id AS theme_id,
+                    t.name AS theme_name,
+                    t.description,
+                    t.image_path
+                FROM reservation r
+                INNER JOIN reservation_time rt ON r.time_id = rt.id
+                INNER JOIN theme t ON r.theme_id = t.id
+                WHERE r.id = :id
+                FOR UPDATE
+                """;
+        SqlParameterSource parameters = new MapSqlParameterSource()
+                .addValue("id", id);
+        return jdbcTemplate.query(sql, parameters, reservationRowMapper)
+                .stream()
+                .findFirst();
+    }
+
+    public Optional<Reservation> findActiveBySlotForUpdate(ReservationSlot slot) {
+        String sql = """
+                SELECT
+                    r.id,
+                    r.store_id,
+                    r.member_id,
+                    r.name,
+                    r.date,
+                    r.status,
+                    rt.id AS time_id,
+                    rt.start_at AS time_start_at,
+                    t.id AS theme_id,
+                    t.name AS theme_name,
+                    t.description,
+                    t.image_path
+                FROM reservation r
+                INNER JOIN reservation_time rt ON r.time_id = rt.id
+                INNER JOIN theme t ON r.theme_id = t.id
+                WHERE r.store_id = :storeId
+                  AND r.date = :date
+                  AND r.time_id = :timeId
+                  AND r.theme_id = :themeId
+                  AND r.status = 'RESERVED'
+                FOR UPDATE
+                """;
+        return jdbcTemplate.query(sql, slotParameters(slot), reservationRowMapper)
+                .stream()
+                .findFirst();
+    }
+
+    public boolean existsActiveBySlot(ReservationSlot slot) {
+        String sql = """
+                SELECT COUNT(1)
+                FROM reservation
+                WHERE store_id = :storeId
+                  AND date = :date
+                  AND time_id = :timeId
+                  AND theme_id = :themeId
+                  AND status = 'RESERVED'
+                """;
+        Integer count = jdbcTemplate.queryForObject(sql, slotParameters(slot), Integer.class);
+        return count != null && count > 0;
+    }
+
     public Reservation updateSchedule(Reservation reservation) {
+        updateScheduleIfReserved(reservation);
+        return reservation;
+    }
+
+    public int updateScheduleIfReserved(Reservation reservation) {
         String sql = """
                 update reservation
                 set date = :date, time_id = :timeId
-                where id = :id
+                where id = :id and status = 'RESERVED'
                 """;
         SqlParameterSource parameters = new MapSqlParameterSource()
                 .addValue("id", reservation.getId())
                 .addValue("date", reservation.getDate())
                 .addValue("timeId", reservation.getTime().getId());
-        jdbcTemplate.update(sql, parameters);
-        return reservation;
+        return jdbcTemplate.update(sql, parameters);
     }
 
     public Reservation updateStatus(Reservation reservation) {
+        updateStatus(reservation, ReservationStatus.RESERVED);
+        return reservation;
+    }
+
+    public int updateStatus(Reservation reservation, ReservationStatus expectedStatus) {
         String sql = """
                 update reservation
                 set status = :status
-                where id = :id
+                where id = :id and status = :expectedStatus
                 """;
         SqlParameterSource parameters = new MapSqlParameterSource()
                 .addValue("id", reservation.getId())
-                .addValue("status", reservation.getStatus().name());
-        jdbcTemplate.update(sql, parameters);
-        return reservation;
+                .addValue("status", reservation.getStatus().name())
+                .addValue("expectedStatus", expectedStatus.name());
+        return jdbcTemplate.update(sql, parameters);
     }
 
     public void deleteById(Long id) {
@@ -218,5 +300,13 @@ public class ReservationRepository {
         if (deletedCount == 0) {
             throw new ReservationNotFoundException("해당 예약을 찾을 수 없습니다.");
         }
+    }
+
+    private SqlParameterSource slotParameters(ReservationSlot slot) {
+        return new MapSqlParameterSource()
+                .addValue("storeId", slot.getStoreId())
+                .addValue("date", slot.getDate())
+                .addValue("timeId", slot.getTime().getId())
+                .addValue("themeId", slot.getTheme().getId());
     }
 }

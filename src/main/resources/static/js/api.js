@@ -169,13 +169,51 @@ export async function updateReservationSchedule(id, payload) {
 }
 
 export async function cancelMyReservation(id) {
-    const res = await fetch(`/reservations/${id}`, {
-        method: 'DELETE',
+    const res = await fetch(`/reservations/${id}/cancel`, {
+        method: 'POST',
         credentials: 'same-origin'
     });
     if (!res.ok) {
         const err = await res.json();
         throw new Error(err.message || 'Failed to cancel reservation');
+    }
+    return res.json();
+}
+
+export async function createWaitingReservation(payload) {
+    const res = await fetch('/waiting-reservations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify(payload)
+    });
+    if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || 'Failed to create waiting reservation');
+    }
+    return res.json();
+}
+
+export async function fetchMyWaitingReservations(page = 0, size = 20) {
+    const res = await fetch(`/waiting-reservations?page=${page}&size=${size}`, {
+        credentials: 'same-origin'
+    });
+    if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || 'Failed to fetch waiting reservations');
+    }
+    const data = await res.json();
+    return data.waitingReservations || data;
+}
+
+export async function cancelMyWaitingReservation(id) {
+    const res = await fetch(`/waiting-reservations/${id}/cancel`, {
+        method: 'POST',
+        credentials: 'same-origin'
+    });
+    if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || 'Failed to cancel waiting reservation');
     }
     return res.json();
 }
@@ -187,8 +225,70 @@ export async function fetchAdminReservations(page = 0, size = 100) {
     return data.reservations || data;
 }
 
+export async function createAdminReservation(payload) {
+    const res = await fetch('/admin/reservations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify(payload)
+    });
+    if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || 'Failed to create admin reservation');
+    }
+    return res.json();
+}
+
+export async function cancelAdminReservation(id) {
+    const res = await fetch(`/admin/reservations/${id}/cancel`, {
+        method: 'POST',
+        credentials: 'same-origin'
+    });
+    if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || 'Failed to cancel admin reservation');
+    }
+    return res.json();
+}
+
 export async function deleteAdminReservation(id) {
     const res = await fetch(`/admin/reservations/${id}`, { method: 'DELETE' });
-    if (!res.ok) throw new Error('Failed to delete admin reservation');
+    if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || 'Failed to delete admin reservation');
+    }
+    return res;
+}
+
+export async function fetchAdminWaitingReservations(page = 0, size = 100) {
+    const res = await fetch(`/admin/waiting-reservations?page=${page}&size=${size}`, {
+        credentials: 'same-origin'
+    });
+    if (!res.ok) throw new Error('Failed to fetch admin waiting reservations');
+    const data = await res.json();
+    return data.waitingReservations || data;
+}
+
+export async function cancelAdminWaitingReservation(id) {
+    const res = await fetch(`/admin/waiting-reservations/${id}/cancel`, {
+        method: 'POST',
+        credentials: 'same-origin'
+    });
+    if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || 'Failed to cancel admin waiting reservation');
+    }
+    return res.json();
+}
+
+export async function deleteAdminWaitingReservation(id) {
+    const res = await fetch(`/admin/waiting-reservations/${id}`, {
+        method: 'DELETE',
+        credentials: 'same-origin'
+    });
+    if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || 'Failed to delete admin waiting reservation');
+    }
     return res;
 }

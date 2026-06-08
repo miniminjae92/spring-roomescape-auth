@@ -1,6 +1,7 @@
 package roomescape.service;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -9,7 +10,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
-import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,6 +29,7 @@ import roomescape.repository.ReservationTimeRepository;
 import roomescape.repository.StoreManagerRepository;
 import roomescape.repository.StoreRepository;
 import roomescape.repository.ThemeRepository;
+import roomescape.repository.WaitingReservationRepository;
 import roomescape.service.dto.reservation.CreateReservationCommand;
 import roomescape.service.dto.reservation.CancelReservationCommand;
 import roomescape.service.dto.reservation.ChangeReservationScheduleCommand;
@@ -45,6 +46,7 @@ class ReservationServiceTest {
     private ThemeRepository themeRepository;
     private StoreManagerRepository storeManagerRepository;
     private StoreRepository storeRepository;
+    private WaitingReservationRepository waitingReservationRepository;
     private ReservationService reservationService;
 
     @BeforeEach
@@ -54,12 +56,18 @@ class ReservationServiceTest {
         themeRepository = mock(ThemeRepository.class);
         storeManagerRepository = mock(StoreManagerRepository.class);
         storeRepository = mock(StoreRepository.class);
+        waitingReservationRepository = mock(WaitingReservationRepository.class);
+        ReservationSlotResolver slotResolver = new ReservationSlotResolver(
+                reservationTimeRepository,
+                themeRepository,
+                storeRepository
+        );
         reservationService = new ReservationService(
                 reservationRepository,
                 reservationTimeRepository,
-                themeRepository,
                 storeManagerRepository,
-                storeRepository,
+                waitingReservationRepository,
+                slotResolver,
                 FIXED_CLOCK
         );
     }
@@ -121,8 +129,7 @@ class ReservationServiceTest {
     @Test
     void 같은_날짜_시간_테마에_이미_예약이_있으면_중복_예약을_거부한다() {
         stubReservationDependencies(LocalTime.of(15, 0));
-        when(reservationTimeRepository.findReservedTimeIds(1L, 1L, LocalDate.of(2026, 5, 16)))
-                .thenReturn(List.of(1L));
+        when(reservationRepository.existsActiveBySlot(any())).thenReturn(true);
 
         CreateReservationCommand command = new CreateReservationCommand(
                 1L,
@@ -141,10 +148,9 @@ class ReservationServiceTest {
     void 이미_예약된_슬롯으로_예약을_변경할_수_없다() {
         Reservation reservation = reservation();
         ReservationTime targetTime = ReservationTime.from(2L, LocalTime.of(11, 0));
-        when(reservationRepository.findById(1L)).thenReturn(Optional.of(reservation));
+        when(reservationRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(reservation));
         when(reservationTimeRepository.findById(2L)).thenReturn(Optional.of(targetTime));
-        when(reservationTimeRepository.findReservedTimeIds(1L, 1L, LocalDate.of(2026, 5, 16)))
-                .thenReturn(List.of(1L, 2L));
+        when(reservationRepository.existsActiveBySlot(any())).thenReturn(true);
 
         ChangeReservationScheduleCommand command = new ChangeReservationScheduleCommand(
                 1L,
@@ -160,7 +166,7 @@ class ReservationServiceTest {
     @Test
     void 이미_같은_일정으로_예약되어_있으면_변경할_수_없다() {
         Reservation reservation = reservation();
-        when(reservationRepository.findById(1L)).thenReturn(Optional.of(reservation));
+        when(reservationRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(reservation));
         when(reservationTimeRepository.findById(1L)).thenReturn(Optional.of(reservation.getTime()));
 
         ChangeReservationScheduleCommand command = new ChangeReservationScheduleCommand(
@@ -179,7 +185,7 @@ class ReservationServiceTest {
     void 지난_예약은_변경할_수_없다() {
         Reservation reservation = pastReservation();
         ReservationTime targetTime = ReservationTime.from(2L, LocalTime.of(11, 0));
-        when(reservationRepository.findById(1L)).thenReturn(Optional.of(reservation));
+        when(reservationRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(reservation));
         when(reservationTimeRepository.findById(2L)).thenReturn(Optional.of(targetTime));
 
         ChangeReservationScheduleCommand command = new ChangeReservationScheduleCommand(
@@ -196,7 +202,7 @@ class ReservationServiceTest {
 
     @Test
     void 회원이_일치하지_않으면_예약을_변경할_수_없다() {
-        when(reservationRepository.findById(1L)).thenReturn(Optional.of(reservation()));
+        when(reservationRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(reservation()));
 
         ChangeReservationScheduleCommand command = new ChangeReservationScheduleCommand(
                 1L,
@@ -212,7 +218,7 @@ class ReservationServiceTest {
 
     @Test
     void 회원이_일치하지_않으면_예약을_취소할_수_없다() {
-        when(reservationRepository.findById(1L)).thenReturn(Optional.of(reservation()));
+        when(reservationRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(reservation()));
 
         CancelReservationCommand command = new CancelReservationCommand(1L, 2L);
 
@@ -223,7 +229,7 @@ class ReservationServiceTest {
 
     @Test
     void 지난_예약은_취소할_수_없다() {
-        when(reservationRepository.findById(1L)).thenReturn(Optional.of(pastReservation()));
+        when(reservationRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(pastReservation()));
 
         CancelReservationCommand command = new CancelReservationCommand(1L, 1L);
 

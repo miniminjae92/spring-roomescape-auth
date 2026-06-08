@@ -65,6 +65,11 @@
             font-size: 1.1rem;
         }
 
+        .section-heading {
+            margin: 2.5rem 0 1rem;
+            font-size: 1.35rem;
+        }
+
         .search-box {
             display: flex;
             gap: 1rem;
@@ -209,9 +214,13 @@
         <h1>MY RESERVATIONS</h1>
         <p class="subtitle">예약하신 내역을 조회하고 일정을 변경하거나 취소할 수 있습니다.</p>
 
+        <h2 class="section-heading">예약 내역</h2>
         <div class="reservation-list" id="resList">
             <!-- Items -->
         </div>
+
+        <h2 class="section-heading">예약 대기</h2>
+        <div class="reservation-list" id="waitingList"></div>
 
         <div class="pagination" id="pagination">
             <button type="button" id="prevPageButton">이전</button>
@@ -243,10 +252,19 @@
     </div>
 
 <script type="module">
-    import { fetchMe, fetchMyReservations, cancelMyReservation, updateReservationSchedule, fetchAvailableTimes } from '/js/api.js';
+    import {
+        fetchMe,
+        fetchMyReservations,
+        fetchMyWaitingReservations,
+        cancelMyReservation,
+        cancelMyWaitingReservation,
+        updateReservationSchedule,
+        fetchAvailableTimes
+    } from '/js/api.js';
     import { showToast } from '/js/utils.js';
 
     const resList = document.getElementById('resList');
+    const waitingList = document.getElementById('waitingList');
     const pagination = document.getElementById('pagination');
     const prevPageButton = document.getElementById('prevPageButton');
     const nextPageButton = document.getElementById('nextPageButton');
@@ -281,6 +299,17 @@
             await cancelMyReservation(id);
             showToast('예약이 성공적으로 취소되었습니다.', 'success');
             await loadReservations(currentPage);
+        } catch(e) {
+            showToast(e.message, 'error');
+        }
+    };
+
+    window.cancelWaiting = async (id) => {
+        if(!confirm('정말로 이 예약 대기를 취소하시겠습니까?')) return;
+        try {
+            await cancelMyWaitingReservation(id);
+            showToast('예약 대기가 취소되었습니다.', 'success');
+            await loadWaitingReservations();
         } catch(e) {
             showToast(e.message, 'error');
         }
@@ -368,6 +397,35 @@
         }
     }
 
+    async function loadWaitingReservations() {
+        waitingList.innerHTML = '<p style="text-align:center; color:#94a3b8;">조회 중...</p>';
+        try {
+            const data = await fetchMyWaitingReservations(0, 100);
+            waitingList.innerHTML = '';
+            if (data.length === 0) {
+                waitingList.innerHTML = '<p style="text-align:center; color:#94a3b8;">활성 예약 대기가 없습니다.</p>';
+                return;
+            }
+            data.forEach(waiting => {
+                const div = document.createElement('div');
+                div.className = 'reservation-card';
+                div.innerHTML = `
+                    <div class="info">
+                        <h3>${waiting.theme?.name || '알수없음'}</h3>
+                        <p>${waiting.date} | ${waiting.time?.startAt || '알수없음'}</p>
+                        <p>현재 대기 순번: ${waiting.rank}번</p>
+                    </div>
+                    <div class="actions">
+                        <button type="button" class="btn-danger" onclick="cancelWaiting(${waiting.id})">대기 취소</button>
+                    </div>
+                `;
+                waitingList.appendChild(div);
+            });
+        } catch (e) {
+            waitingList.innerHTML = '<p style="text-align:center; color:#ef4444;">대기 조회 중 오류가 발생했습니다.</p>';
+        }
+    }
+
     prevPageButton.addEventListener('click', async () => {
         if (currentPage === 0) return;
         await loadReservations(currentPage - 1);
@@ -401,7 +459,7 @@
             window.location.href = '/';
             return;
         }
-        await loadReservations(0);
+        await Promise.all([loadReservations(0), loadWaitingReservations()]);
     }
 
     bootstrap();

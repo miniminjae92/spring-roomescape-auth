@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>예약 대기 관리 - Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary:#f59e0b; --danger:#ef4444; --bg:#09090b; --card:rgba(255,255,255,.03); --border:rgba(255,255,255,.1); --muted:#94a3b8; }
+        * { box-sizing:border-box; }
+        body { margin:0; font-family:'Outfit',sans-serif; background:var(--bg); color:#f8fafc; min-height:100vh; }
+        nav { padding:1.5rem 2rem; border-bottom:1px solid var(--border); display:flex; gap:1.5rem; }
+        nav a { color:var(--muted); text-decoration:none; font-weight:700; }
+        nav a.active { color:var(--primary); }
+        main { max-width:1100px; margin:3rem auto; padding:0 2rem; }
+        h1 { font-size:2.5rem; margin-bottom:.5rem; }
+        .subtitle { color:var(--muted); margin-bottom:2rem; }
+        .card { background:var(--card); border:1px solid var(--border); border-radius:20px; padding:2rem; overflow-x:auto; }
+        table { width:100%; border-collapse:collapse; }
+        th, td { padding:1rem; text-align:left; border-bottom:1px solid var(--border); }
+        th { color:var(--muted); }
+        button { border-radius:8px; padding:.55rem .8rem; cursor:pointer; font-weight:800; }
+        .cancel { color:var(--primary); background:rgba(245,158,11,.1); border:1px solid rgba(245,158,11,.3); }
+        .delete { color:var(--danger); background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.3); }
+        .badge { display:inline-block; padding:.4rem .7rem; border-radius:999px; background:rgba(255,255,255,.08); }
+    </style>
+</head>
+<body>
+<nav>
+    <a href="/admin.html">&larr; 관리자 메인</a>
+    <a href="/admin-reservation.html">예약 현황</a>
+    <a href="/admin-waiting.html" class="active">예약 대기</a>
+</nav>
+<main>
+    <h1>WAITING RESERVATIONS</h1>
+    <p class="subtitle">예약 대기의 현재 상태와 승격 이력을 관리합니다.</p>
+    <section class="card">
+        <table>
+            <thead>
+            <tr><th>ID</th><th>신청자</th><th>일정</th><th>테마</th><th>상태</th><th>승격 예약</th><th>작업</th></tr>
+            </thead>
+            <tbody id="waitingList"></tbody>
+        </table>
+    </section>
+</main>
+<script type="module">
+    import {
+        requireManager,
+        fetchAdminWaitingReservations,
+        cancelAdminWaitingReservation,
+        deleteAdminWaitingReservation
+    } from '/js/api.js';
+    import { showToast } from '/js/utils.js';
+
+    const waitingList = document.getElementById('waitingList');
+
+    window.cancelWaiting = async (id) => {
+        if (!confirm('이 예약 대기를 취소하시겠습니까?')) return;
+        try {
+            await cancelAdminWaitingReservation(id);
+            showToast('예약 대기가 취소되었습니다.', 'success');
+            await loadWaiting();
+        } catch (e) {
+            showToast(e.message, 'error');
+        }
+    };
+
+    window.deleteWaiting = async (id) => {
+        if (!confirm('이 예약 대기 이력을 영구 삭제하시겠습니까?')) return;
+        try {
+            await deleteAdminWaitingReservation(id);
+            showToast('예약 대기가 삭제되었습니다.', 'success');
+            await loadWaiting();
+        } catch (e) {
+            showToast(e.message, 'error');
+        }
+    };
+
+    async function loadWaiting() {
+        const items = await fetchAdminWaitingReservations(0, 100);
+        waitingList.innerHTML = items.length ? '' : '<tr><td colspan="7">예약 대기가 없습니다.</td></tr>';
+        items.forEach(item => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${item.id}</td>
+                <td>${item.name}</td>
+                <td>${item.date} ${item.time?.startAt || ''}</td>
+                <td>${item.theme?.name || ''}</td>
+                <td><span class="badge">${item.status}</span></td>
+                <td>${item.promotedReservationId || '-'}</td>
+                <td>
+                    ${item.status === 'WAITING' ? `<button class="cancel" onclick="cancelWaiting(${item.id})">취소</button>` : ''}
+                    <button class="delete" onclick="deleteWaiting(${item.id})">삭제</button>
+                </td>
+            `;
+            waitingList.appendChild(row);
+        });
+    }
+
+    const manager = await requireManager();
+    if (manager) {
+        try {
+            await loadWaiting();
+        } catch (e) {
+            showToast('예약 대기 목록을 불러오지 못했습니다.', 'error');
+        }
+    }
+</script>
+</body>
+</html>

@@ -1,7 +1,6 @@
 package roomescape.domain;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
 import lombok.Getter;
 import roomescape.global.exception.reservation.CancelledReservationException;
 import roomescape.global.exception.reservation.InvalidReservationException;
@@ -15,25 +14,19 @@ public class Reservation {
     private static final String NAME_PATTERN = "^[가-힣a-zA-Z ]+$";
 
     private final Long id;
-    private final Long storeId;
     private final Long memberId;
     private final String name;
-    private final ReservationSchedule schedule;
-    private final Theme theme;
+    private final ReservationSlot slot;
     private final ReservationStatus status;
 
     private Reservation(Long id, Long storeId, Long memberId, String name, LocalDate date, ReservationTime time, Theme theme,
                         ReservationStatus status) {
-        validateStoreId(storeId);
         validateMemberId(memberId);
         validateName(name);
-        validateTheme(theme);
         this.id = id;
-        this.storeId = storeId;
         this.memberId = memberId;
         this.name = name;
-        this.schedule = ReservationSchedule.of(date, time);
-        this.theme = theme;
+        this.slot = ReservationSlot.of(storeId, date, time, theme);
         this.status = status;
     }
 
@@ -50,32 +43,37 @@ public class Reservation {
     public Reservation changeSchedule(LocalDate date, ReservationTime time) {
         validateReserved();
         validateDifferentSchedule(date, time);
-        return new Reservation(id, storeId, memberId, name, date, time, theme, status);
+        return new Reservation(id, getStoreId(), memberId, name, date, time, getTheme(), status);
     }
 
     public Reservation cancel() {
         validateReserved();
-        return new Reservation(id, storeId, memberId, name, getDate(), getTime(), theme, ReservationStatus.CANCELLED);
+        return new Reservation(id, getStoreId(), memberId, name, getDate(), getTime(), getTheme(),
+                ReservationStatus.CANCELLED);
     }
 
     public boolean hasSameSchedule(LocalDate date, ReservationTime time) {
-        return schedule.hasSameSchedule(date, time);
-    }
-
-    public boolean isExpired(LocalDate today, LocalTime now) {
-        return schedule.isExpired(today, now);
+        return slot.isSameSchedule(date, time);
     }
 
     public boolean isOwnedBy(Long memberId) {
         return this.memberId != null && this.memberId.equals(memberId);
     }
 
+    public Long getStoreId() {
+        return slot.getStoreId();
+    }
+
     public LocalDate getDate() {
-        return schedule.getDate();
+        return slot.getDate();
     }
 
     public ReservationTime getTime() {
-        return schedule.getTime();
+        return slot.getTime();
+    }
+
+    public Theme getTheme() {
+        return slot.getTheme();
     }
 
     private void validateDifferentSchedule(LocalDate date, ReservationTime time) {
@@ -87,12 +85,6 @@ public class Reservation {
     private void validateMemberId(Long memberId) {
         if (memberId == null) {
             throw new InvalidReservationException("예약 회원은 필수입니다.");
-        }
-    }
-
-    private void validateStoreId(Long storeId) {
-        if (storeId == null) {
-            throw new InvalidReservationException("예약 매장은 필수입니다.");
         }
     }
 
@@ -108,12 +100,6 @@ public class Reservation {
         }
         if (!name.matches(NAME_PATTERN)) {
             throw new InvalidReservationException("이름은 완성형 한글, 영문, 공백만 허용합니다.");
-        }
-    }
-
-    private void validateTheme(Theme theme) {
-        if (theme == null) {
-            throw new InvalidReservationException("예약 테마는 필수입니다.");
         }
     }
 

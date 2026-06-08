@@ -224,6 +224,17 @@
             box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4);
         }
 
+        .btn-cancel {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--primary);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-right: 0.4rem;
+        }
+
         .empty-state {
             text-align: center;
             padding: 3rem;
@@ -289,6 +300,7 @@
         <a href="/admin.html">&larr; 관리자 메인</a>
         <div class="nav-links">
             <a href="/admin-reservation.html" class="active">예약 현황</a>
+            <a href="/admin-waiting.html">예약 대기</a>
             <a href="/admin-time.html">시간 관리</a>
             <a href="/admin-theme.html">테마 관리</a>
         </div>
@@ -334,7 +346,7 @@
                             <th>날짜</th>
                             <th>테마</th>
                             <th>시간</th>
-                            <th style="width: 80px; text-align: center;">작업</th>
+                            <th style="width: 180px; text-align: center;">작업</th>
                         </tr>
                     </thead>
                     <tbody id="resList">
@@ -352,7 +364,15 @@
     </div>
 
 <script type="module">
-    import { fetchThemes, fetchReservationTimes, fetchAdminReservations, createReservation, deleteAdminReservation, requireManager } from '/js/api.js';
+    import {
+        fetchThemes,
+        fetchReservationTimes,
+        fetchAdminReservations,
+        createAdminReservation,
+        cancelAdminReservation,
+        deleteAdminReservation,
+        requireManager
+    } from '/js/api.js';
     import { showToast } from '/js/utils.js';
 
     const resForm = document.getElementById('resForm');
@@ -379,13 +399,24 @@
     };
 
     window.deleteRes = async (id) => {
-        if (!confirm('정말로 해당 예약을 삭제(취소)하시겠습니까?')) return;
+        if (!confirm('정말로 해당 예약을 영구 삭제하시겠습니까? 활성 대기가 있으면 삭제할 수 없습니다.')) return;
         try {
             await deleteAdminReservation(id);
             showToast('예약이 삭제되었습니다.', 'success');
             loadReservations();
         } catch (e) {
-            showToast('삭제에 실패했습니다.', 'error');
+            showToast(e.message || '삭제에 실패했습니다.', 'error');
+        }
+    };
+
+    window.cancelRes = async (id) => {
+        if (!confirm('예약을 취소하고 다음 대기자를 승격하시겠습니까?')) return;
+        try {
+            await cancelAdminReservation(id);
+            showToast('예약이 취소되었습니다.', 'success');
+            loadReservations();
+        } catch (e) {
+            showToast(e.message || '취소에 실패했습니다.', 'error');
         }
     };
 
@@ -481,6 +512,7 @@
                     <td><span class="badge theme-badge" style="${isCancelled ? 'background: rgba(255,255,255,0.1); color: #94a3b8; border-color: #333;' : ''}">${r.theme ? r.theme.name : '알수없음'}</span></td>
                     <td><span class="badge" style="${isCancelled ? 'background: rgba(255,255,255,0.1); color: #94a3b8; border-color: #333;' : ''}">${r.time ? r.time.startAt : '알수없음'}</span></td>
                     <td style="text-align: center;">
+                        ${isCancelled ? '' : `<button class="btn-cancel" onclick="cancelRes(${r.id})">취소</button>`}
                         <button class="btn-danger" onclick="deleteRes(${r.id})">삭제</button>
                     </td>
                 `;
@@ -501,7 +533,7 @@
             timeId: parseInt(timeSelect.value)
         };
         try {
-            await createReservation(payload);
+            await createAdminReservation(payload);
             showToast('예약이 추가되었습니다.', 'success');
             resForm.reset();
             currentPage = 0;

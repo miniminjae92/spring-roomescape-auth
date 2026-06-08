@@ -81,4 +81,16 @@ public class ReservationController {
         );
         return ResponseEntity.ok(ReservationResponse.from(result));
     }
+
+    @PostMapping("/{id}/cancel")
+    @LoginRequired
+    public ResponseEntity<ReservationResponse> cancelReservationByCommand(
+            @Authenticated LoginMember loginMember,
+            @PathVariable Long id
+    ) {
+        ReservationResult result = reservationService.cancelReservation(
+                new CancelReservationCommand(id, loginMember.id())
+        );
+        return ResponseEntity.ok(ReservationResponse.from(result));
+    }
 }

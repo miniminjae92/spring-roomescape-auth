@@ -67,3 +67,29 @@ CREATE TABLE reservation
     FOREIGN KEY (time_id) REFERENCES reservation_time (id),
     FOREIGN KEY (theme_id) REFERENCES theme (id)
 );
+
+CREATE TABLE waiting_reservation
+(
+    id                      BIGINT       NOT NULL AUTO_INCREMENT,
+    store_id                BIGINT       NOT NULL,
+    member_id               BIGINT       NOT NULL,
+    name                    VARCHAR(255) NOT NULL,
+    date                    DATE         NOT NULL,
+    time_id                 BIGINT       NOT NULL,
+    theme_id                BIGINT       NOT NULL,
+    status                  VARCHAR(20)  NOT NULL DEFAULT 'WAITING',
+    created_at              TIMESTAMP    NOT NULL,
+    promoted_reservation_id BIGINT,
+    active_waiting BOOLEAN GENERATED ALWAYS AS (
+        CASE WHEN status = 'WAITING' THEN TRUE ELSE NULL END
+    ),
+    PRIMARY KEY (id),
+    CONSTRAINT unique_active_waiting_slot UNIQUE (
+        member_id, store_id, date, time_id, theme_id, active_waiting
+    ),
+    FOREIGN KEY (store_id) REFERENCES store (id),
+    FOREIGN KEY (member_id) REFERENCES member (id),
+    FOREIGN KEY (time_id) REFERENCES reservation_time (id),
+    FOREIGN KEY (theme_id) REFERENCES theme (id),
+    FOREIGN KEY (promoted_reservation_id) REFERENCES reservation (id) ON DELETE SET NULL
+);
