@@ -72,7 +72,7 @@ class ReservationTimeRepositoryTest {
                 cancelledTime.getId(),
                 theme.getId()
         );
-        reservationRepository.updateStatus(cancelledReservation.cancel());
+        reservationRepository.updateStatus(cancelledReservation.cancel(), cancelledTime);
 
         List<Long> reservedTimeIds = reservationTimeRepository.findReservedTimeIds(1L, theme.getId(), targetDate);
 

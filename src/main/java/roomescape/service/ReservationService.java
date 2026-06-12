@@ -3,12 +3,12 @@ package roomescape.service;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import roomescape.domain.ReservationSchedule;
 import roomescape.domain.ReservedTimes;
 import roomescape.service.dto.reservation.CreateReservationCommand;
 import roomescape.domain.Reservation;
@@ -16,7 +16,6 @@ import roomescape.domain.ReservationTime;
 import roomescape.domain.Theme;
 import roomescape.global.exception.reservation.ExpiredReservationCancelException;
 import roomescape.global.exception.reservation.ExpiredReservationChangeException;
-import roomescape.global.exception.reservation.InvalidReservationException;
 import roomescape.global.exception.reservation.ReservationAccessDeniedException;
 import roomescape.global.exception.reservation.ReservationNotFoundException;
 import roomescape.global.exception.reservationtime.ReservationTimeNotFoundException;
@@ -67,21 +66,19 @@ public class ReservationService {
     public ReservationResult createReservation(CreateReservationCommand command) {
         ReservationTime time = getReservationTime(command);
         Theme theme = getTheme(command);
+        ReservationSchedule reservationSchedule = createReservationSchedule(command.date(), time);
         validateStoreExists(command.storeId());
-        validateReservableDateTime(command.date(), time);
         validateAvailableSlot(command.storeId(), theme.getId(), command.date(), time.getId());
 
-        Reservation reservation = reservationRepository.save(
-                Reservation.createNew(
-                        command.storeId(),
-                        command.memberId(),
-                        command.name(),
-                        command.date(),
-                        time,
-                        theme)
+        Reservation reservation = Reservation.createNew(
+                command.storeId(),
+                command.memberId(),
+                command.name(),
+                command.date(),
+                time,
+                theme
         );
-
-        return ReservationResult.from(reservation);
+        return ReservationResult.from(reservationRepository.save(reservation));
     }
 
     @Transactional
@@ -102,7 +99,7 @@ public class ReservationService {
         Reservation reservation = getReservation(command.reservationId(), command.memberId());
         validateChangeableReservation(reservation);
         ReservationTime time = getReservationTime(command.timeId());
-        validateReservableDateTime(command.date(), time);
+        createReservationSchedule(command.date(), time);
 
         validateAvailableSlot(reservation.getStoreId(), reservation.getTheme().getId(), command.date(), time.getId());
 
@@ -145,24 +142,17 @@ public class ReservationService {
         return reservation;
     }
 
-    private void validateReservableDateTime(LocalDate date, ReservationTime time) {
-        LocalDate today = LocalDate.now(clock);
-        LocalTime now = LocalTime.now(clock);
-        LocalDateTime reservationDateTime = LocalDateTime.of(date, time.getStartAt());
-        LocalDateTime currentDateTime = LocalDateTime.of(today, now);
-
-        if (reservationDateTime.isBefore(currentDateTime)) {
-            throw new InvalidReservationException("과거 날짜/시간으로는 예약할 수 없습니다.");
-        }
-        if (date.isAfter(today.plusDays(30))) {
-            throw new InvalidReservationException("30일을 초과한 날짜로는 예약할 수 없습니다.");
-        }
-    }
-
     private void validateStoreExists(Long storeId) {
         if (!storeRepository.existsById(storeId)) {
             throw new StoreNotFoundException("선택한 매장이 존재하지 않습니다.");
         }
+    }
+
+    private ReservationSchedule createReservationSchedule(LocalDate date, ReservationTime time) {
+        return ReservationSchedule.create(
+                LocalDateTime.of(date, time.getStartAt()),
+                LocalDateTime.now(clock)
+        );
     }
 
     private void validateAvailableSlot(Long storeId, Long themeId, LocalDate date, Long timeId) {
@@ -173,19 +163,13 @@ public class ReservationService {
     }
 
     private void validateChangeableReservation(Reservation reservation) {
-        LocalDate today = LocalDate.now(clock);
-        LocalTime now = LocalTime.now(clock);
-
-        if (reservation.isExpired(today, now)) {
+        if (reservation.isExpired(LocalDateTime.now(clock))) {
             throw new ExpiredReservationChangeException("지난 예약은 변경할 수 없습니다.");
         }
     }
 
     private void validateCancellableReservation(Reservation reservation) {
-        LocalDate today = LocalDate.now(clock);
-        LocalTime now = LocalTime.now(clock);
-
-        if (reservation.isExpired(today, now)) {
+        if (reservation.isExpired(LocalDateTime.now(clock))) {
             throw new ExpiredReservationCancelException("지난 예약은 취소할 수 없습니다.");
         }
     }

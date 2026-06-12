@@ -49,9 +49,9 @@ class ReservationRepositoryTest {
         Reservation second = createMemberReservation("사용자이", eleven);
         Reservation third = createMemberReservation("사용자삼", noon);
 
-        List<Reservation> reservations = reservationRepository.findAll(2, 1);
+        List<ReservationData> reservations = reservationRepository.findAll(2, 1);
 
-        assertThat(reservations).extracting(Reservation::getId)
+        assertThat(reservations).extracting(reservationData -> reservationData.reservation().getId())
                 .containsExactly(second.getId(), third.getId());
     }
 
@@ -61,9 +61,9 @@ class ReservationRepositoryTest {
         createMemberReservation(shark, eleven);
         Reservation second = createMemberReservation(whale, noon);
 
-        List<Reservation> reservations = reservationRepository.findAllByMemberId(whale.getId(), 1, 1);
+        List<ReservationData> reservations = reservationRepository.findAllByMemberId(whale.getId(), 1, 1);
 
-        assertThat(reservations).extracting(Reservation::getId)
+        assertThat(reservations).extracting(reservationData -> reservationData.reservation().getId())
                 .containsExactly(second.getId());
     }
 
@@ -71,7 +71,7 @@ class ReservationRepositoryTest {
     void 회원에_해당하는_예약이_없으면_빈_목록을_반환한다() {
         createMemberReservation(whale, ten);
 
-        List<Reservation> reservations = reservationRepository.findAllByMemberId(shark.getId(), 20, 0);
+        List<ReservationData> reservations = reservationRepository.findAllByMemberId(shark.getId(), 20, 0);
 
         assertThat(reservations).isEmpty();
     }

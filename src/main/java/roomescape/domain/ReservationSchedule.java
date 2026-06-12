@@ -1,39 +1,49 @@
 package roomescape.domain;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import lombok.Getter;
 import roomescape.global.exception.reservation.InvalidReservationException;
 
 @Getter
 public class ReservationSchedule {
 
-    private final LocalDate date;
-    private final ReservationTime time;
+    private final LocalDateTime reservationDateTime;
 
-    private ReservationSchedule(LocalDate date, ReservationTime time) {
-        validateNotNull(date, time);
-        this.date = date;
-        this.time = time;
+    private ReservationSchedule(LocalDateTime reservationDateTime) {
+        validateNotNull(reservationDateTime);
+        this.reservationDateTime = reservationDateTime;
     }
 
-    public static ReservationSchedule of(LocalDate date, ReservationTime time) {
-        return new ReservationSchedule(date, time);
+    public static ReservationSchedule of(LocalDateTime reservationDateTime) {
+        return new ReservationSchedule(reservationDateTime);
     }
 
-    public boolean hasSameSchedule(LocalDate date, ReservationTime time) {
-        return this.date.equals(date) && this.time.hasSameStartAt(time);
+    public static ReservationSchedule create(LocalDateTime reservationDateTime, LocalDateTime currentDateTime) {
+        ReservationSchedule schedule = new ReservationSchedule(reservationDateTime);
+        schedule.validateReservable(currentDateTime);
+        return schedule;
     }
 
-    public boolean isExpired(LocalDate today, LocalTime now) {
-        LocalDateTime reservationDateTime = LocalDateTime.of(this.date, this.time.getStartAt());
-        LocalDateTime currentDateTime = LocalDateTime.of(today, now);
+    public boolean hasSameSchedule(ReservationSchedule other) {
+        return this.reservationDateTime.equals(other.reservationDateTime);
+    }
+
+    public boolean isExpired(LocalDateTime currentDateTime) {
         return reservationDateTime.isBefore(currentDateTime);
     }
 
-    private void validateNotNull(LocalDate date, ReservationTime time) {
-        if (date == null || time == null) {
+    private void validateReservable(LocalDateTime currentDateTime) {
+        validateNotNull(currentDateTime);
+        if (isExpired(currentDateTime)) {
+            throw new InvalidReservationException("과거 날짜/시간으로는 예약할 수 없습니다.");
+        }
+        if (reservationDateTime.isAfter(currentDateTime.plusDays(30))) {
+            throw new InvalidReservationException("30일을 초과한 날짜로는 예약할 수 없습니다.");
+        }
+    }
+
+    private void validateNotNull(LocalDateTime dateTime) {
+        if (dateTime == null) {
             throw new InvalidReservationException("예약 날짜, 시간은 필수입니다.");
         }
     }

@@ -1,10 +1,12 @@
 package roomescape.util;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import org.springframework.stereotype.Component;
 import roomescape.domain.Member;
 import roomescape.domain.Reservation;
+import roomescape.domain.ReservationSchedule;
 import roomescape.domain.ReservationTime;
 import roomescape.domain.Store;
 import roomescape.domain.Theme;
@@ -69,7 +71,11 @@ public class TestDataInitializer {
     public Reservation createMemberReservation(Long storeId, Long memberId, String name, LocalDate date, Long timeId, Long themeId) {
         ReservationTime reservationTime = getReservationTime(timeId);
         Theme theme = getTheme(themeId);
-        return reservationRepository.save(Reservation.createNew(storeId, memberId, name, date, reservationTime, theme));
+        ReservationSchedule schedule = ReservationSchedule.of(LocalDateTime.of(date, reservationTime.getStartAt()));
+        return reservationRepository.save(
+                Reservation.createNew(storeId, memberId, name, schedule, theme),
+                reservationTime
+        ).reservation();
     }
 
     private ReservationTime getReservationTime(Long timeId) {

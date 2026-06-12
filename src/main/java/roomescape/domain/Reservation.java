@@ -1,7 +1,7 @@
 package roomescape.domain;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
+import java.time.LocalDateTime;
 import lombok.Getter;
 import roomescape.global.exception.reservation.CancelledReservationException;
 import roomescape.global.exception.reservation.InvalidReservationException;
@@ -18,21 +18,24 @@ public class Reservation {
     private final Long storeId;
     private final Long memberId;
     private final String name;
-    private final ReservationSchedule schedule;
+    private final LocalDate date;
+    private final ReservationTime time;
     private final Theme theme;
     private final ReservationStatus status;
 
-    private Reservation(Long id, Long storeId, Long memberId, String name, LocalDate date, ReservationTime time, Theme theme,
-                        ReservationStatus status) {
+    private Reservation(Long id, Long storeId, Long memberId, String name, LocalDate date, ReservationTime time,
+                        Theme theme, ReservationStatus status) {
         validateStoreId(storeId);
         validateMemberId(memberId);
         validateName(name);
+        validateSchedule(date, time);
         validateTheme(theme);
         this.id = id;
         this.storeId = storeId;
         this.memberId = memberId;
         this.name = name;
-        this.schedule = ReservationSchedule.of(date, time);
+        this.date = date;
+        this.time = time;
         this.theme = theme;
         this.status = status;
     }
@@ -55,27 +58,23 @@ public class Reservation {
 
     public Reservation cancel() {
         validateReserved();
-        return new Reservation(id, storeId, memberId, name, getDate(), getTime(), theme, ReservationStatus.CANCELLED);
+        return new Reservation(id, storeId, memberId, name, date, time, theme, ReservationStatus.CANCELLED);
     }
 
     public boolean hasSameSchedule(LocalDate date, ReservationTime time) {
-        return schedule.hasSameSchedule(date, time);
+        return this.date.equals(date) && this.time.hasSameStartAt(time);
     }
 
-    public boolean isExpired(LocalDate today, LocalTime now) {
-        return schedule.isExpired(today, now);
+    public boolean isExpired(LocalDateTime currentDateTime) {
+        return LocalDateTime.of(date, time.getStartAt()).isBefore(currentDateTime);
     }
 
     public boolean isOwnedBy(Long memberId) {
         return this.memberId != null && this.memberId.equals(memberId);
     }
 
-    public LocalDate getDate() {
-        return schedule.getDate();
-    }
-
     public ReservationTime getTime() {
-        return schedule.getTime();
+        return time;
     }
 
     private void validateDifferentSchedule(LocalDate date, ReservationTime time) {
@@ -114,6 +113,12 @@ public class Reservation {
     private void validateTheme(Theme theme) {
         if (theme == null) {
             throw new InvalidReservationException("예약 테마는 필수입니다.");
+        }
+    }
+
+    private void validateSchedule(LocalDate date, ReservationTime time) {
+        if (date == null || time == null) {
+            throw new InvalidReservationException("예약 날짜, 시간은 필수입니다.");
         }
     }
 

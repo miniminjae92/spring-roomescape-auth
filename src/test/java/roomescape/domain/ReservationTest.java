@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,7 +34,7 @@ class ReservationTest {
     @Test
     @DisplayName("예약을 정상적으로 생성한다.")
     void createReservation() {
-        Reservation reservation = Reservation.createNew(1L, 1L, "Greene", date, time, theme);
+        Reservation reservation = Reservation.createNew(1L, 1L, "Greene", schedule(), theme);
 
         assertThat(reservation.getName()).isEqualTo("Greene");
         assertThat(reservation.getId()).isNull();
@@ -44,7 +45,7 @@ class ReservationTest {
     void validateNameLength_BoundaryPass() {
         String exactBoundaryName = "a".repeat(20);
 
-        assertThatCode(() -> Reservation.createNew(1L, 1L, exactBoundaryName, date, time, theme))
+        assertThatCode(() -> Reservation.createNew(1L, 1L, exactBoundaryName, schedule(), theme))
                 .doesNotThrowAnyException();
     }
 
@@ -53,7 +54,7 @@ class ReservationTest {
     void validateNameLength_BoundaryFail() {
         String longName = "a".repeat(21);
 
-        assertThatThrownBy(() -> Reservation.createNew(1L, 1L, longName, date, time, theme))
+        assertThatThrownBy(() -> Reservation.createNew(1L, 1L, longName, schedule(), theme))
                 .isInstanceOf(InvalidReservationException.class)
                 .hasMessageContaining("20자 이하");
     }
@@ -63,7 +64,7 @@ class ReservationTest {
     @ValueSource(strings = {" ", "   "})
     @DisplayName("이름이 null이거나 비어있으면 예외가 발생한다.")
     void validateName_NullOrBlank(String invalidName) {
-        assertThatThrownBy(() -> Reservation.createNew(1L, 1L, invalidName, date, time, theme))
+        assertThatThrownBy(() -> Reservation.createNew(1L, 1L, invalidName, schedule(), theme))
                 .isInstanceOf(InvalidReservationException.class)
                 .hasMessageContaining("비어있을 수 없습니다.");
     }
@@ -72,7 +73,7 @@ class ReservationTest {
     @ValueSource(strings = {"A", "가"})
     @DisplayName("이름이 2자 미만이면 예외가 발생한다.")
     void validateName_MinLength(String invalidName) {
-        assertThatThrownBy(() -> Reservation.createNew(1L, 1L, invalidName, date, time, theme))
+        assertThatThrownBy(() -> Reservation.createNew(1L, 1L, invalidName, schedule(), theme))
                 .isInstanceOf(InvalidReservationException.class)
                 .hasMessageContaining("2자 이상");
     }
@@ -81,7 +82,7 @@ class ReservationTest {
     @ValueSource(strings = {"ab", "가나"})
     @DisplayName("이름이 정확히 2자인 경우 예약이 정상 생성된다.")
     void validateName_MinLengthBoundaryPass(String validName) {
-        assertThatCode(() -> Reservation.createNew(1L, 1L, validName, date, time, theme))
+        assertThatCode(() -> Reservation.createNew(1L, 1L, validName, schedule(), theme))
                 .doesNotThrowAnyException();
     }
 
@@ -90,7 +91,7 @@ class ReservationTest {
     void validateName_MaxLength20() {
         String invalidName = "a".repeat(21);
 
-        assertThatThrownBy(() -> Reservation.createNew(1L, 1L, invalidName, date, time, theme))
+        assertThatThrownBy(() -> Reservation.createNew(1L, 1L, invalidName, schedule(), theme))
                 .isInstanceOf(InvalidReservationException.class)
                 .hasMessageContaining("20자 이하");
     }
@@ -99,7 +100,7 @@ class ReservationTest {
     @ValueSource(strings = {"Brown1", "브라운!", "Brown_Lee"})
     @DisplayName("이름에 완성형 한글, 영문, 공백 외 문자가 포함되면 예외가 발생한다.")
     void validateName_AllowedCharacters(String invalidName) {
-        assertThatThrownBy(() -> Reservation.createNew(1L, 1L, invalidName, date, time, theme))
+        assertThatThrownBy(() -> Reservation.createNew(1L, 1L, invalidName, schedule(), theme))
                 .isInstanceOf(InvalidReservationException.class)
                 .hasMessageContaining("완성형 한글, 영문, 공백");
     }
@@ -108,7 +109,7 @@ class ReservationTest {
     @ValueSource(strings = {"Brown", "브라운", "Brown Lee", "브라운 리"})
     @DisplayName("이름이 완성형 한글, 영문, 공백으로만 이루어지면 예약이 정상 생성된다.")
     void validateName_AllowedCharactersPass(String validName) {
-        assertThatCode(() -> Reservation.createNew(1L, 1L, validName, date, time, theme))
+        assertThatCode(() -> Reservation.createNew(1L, 1L, validName, schedule(), theme))
                 .doesNotThrowAnyException();
     }
 
@@ -119,7 +120,7 @@ class ReservationTest {
         @Test
         @DisplayName("예약 회원 식별자가 null이면 예외가 발생한다.")
         void validateMemberId_NotNull() {
-            assertThatThrownBy(() -> Reservation.createNew(1L, null, "Brown", date, time, theme))
+            assertThatThrownBy(() -> Reservation.createNew(1L, null, "Brown", schedule(), theme))
                     .isInstanceOf(InvalidReservationException.class)
                     .hasMessage("예약 회원은 필수입니다.");
         }
@@ -127,7 +128,7 @@ class ReservationTest {
         @Test
         @DisplayName("예약 매장 식별자가 null이면 예외가 발생한다.")
         void validateStoreId_NotNull() {
-            assertThatThrownBy(() -> Reservation.createNew(null, 1L, "Brown", date, time, theme))
+            assertThatThrownBy(() -> Reservation.createNew(null, 1L, "Brown", schedule(), theme))
                     .isInstanceOf(InvalidReservationException.class)
                     .hasMessage("예약 매장은 필수입니다.");
         }
@@ -135,15 +136,7 @@ class ReservationTest {
         @Test
         @DisplayName("예약 날짜가 null이면 예외가 발생한다.")
         void validateDate_NotNull() {
-            assertThatThrownBy(() -> Reservation.createNew(1L, 1L, "Brown", null, time, theme))
-                    .isInstanceOf(InvalidReservationException.class)
-                    .hasMessageContaining("예약 날짜");
-        }
-
-        @Test
-        @DisplayName("예약 시간이 null이면 예외가 발생한다.")
-        void validateTime_NotNull() {
-            assertThatThrownBy(() -> Reservation.createNew(1L, 1L, "Brown", date, null, theme))
+            assertThatThrownBy(() -> Reservation.createNew(1L, 1L, "Brown", null, theme))
                     .isInstanceOf(InvalidReservationException.class)
                     .hasMessageContaining("예약 날짜");
         }
@@ -151,7 +144,7 @@ class ReservationTest {
         @Test
         @DisplayName("예약 테마가 null이면 예외가 발생한다.")
         void validateTheme_NotNull() {
-            assertThatThrownBy(() -> Reservation.createNew(1L, 1L, "Brown", date, time, null))
+            assertThatThrownBy(() -> Reservation.createNew(1L, 1L, "Brown", schedule(), null))
                     .isInstanceOf(InvalidReservationException.class)
                     .hasMessageContaining("예약 테마");
         }
@@ -164,9 +157,9 @@ class ReservationTest {
         @Test
         @DisplayName("이미 같은 일정이면 변경할 수 없다.")
         void cannotChangeToSameSchedule() {
-            Reservation reservation = Reservation.createNew(1L, 1L, "Brown", date, time, theme);
+            Reservation reservation = Reservation.createNew(1L, 1L, "Brown", schedule(), theme);
 
-            assertThatThrownBy(() -> reservation.changeSchedule(date, time))
+            assertThatThrownBy(() -> reservation.changeSchedule(schedule()))
                     .isInstanceOf(SameReservationScheduleException.class)
                     .hasMessage("이미 같은 일정으로 예약되어 있습니다.");
         }
@@ -184,13 +177,14 @@ class ReservationTest {
                     1L,
                     1L,
                     "Brown",
-                    date,
-                    time,
+                    schedule(),
                     theme,
                     ReservationStatus.CANCELLED
             );
 
-            assertThatThrownBy(() -> reservation.changeSchedule(date.plusDays(1), time))
+            assertThatThrownBy(() -> reservation.changeSchedule(
+                    ReservationSchedule.of(LocalDateTime.of(date.plusDays(1), time.getStartAt()))
+            ))
                     .isInstanceOf(CancelledReservationException.class)
                     .hasMessage("이미 취소된 예약입니다.");
         }
@@ -203,8 +197,7 @@ class ReservationTest {
                     1L,
                     1L,
                     "Brown",
-                    date,
-                    time,
+                    schedule(),
                     theme,
                     ReservationStatus.CANCELLED
             );
@@ -213,5 +206,9 @@ class ReservationTest {
                     .isInstanceOf(CancelledReservationException.class)
                     .hasMessage("이미 취소된 예약입니다.");
         }
+    }
+
+    private ReservationSchedule schedule() {
+        return ReservationSchedule.of(LocalDateTime.of(date, time.getStartAt()));
     }
 }

@@ -151,8 +151,16 @@ public class ReservationRepository {
                 .addValue("theme_id", reservation.getTheme().getId())
                 .addValue("status", reservation.getStatus().name());
         Long id = simpleJdbcInsert.executeAndReturnKey(parameters).longValue();
-        return Reservation.from(id, reservation.getStoreId(), reservation.getMemberId(), reservation.getName(), reservation.getDate(), reservation.getTime(),
-                reservation.getTheme(), reservation.getStatus());
+        return Reservation.from(
+                id,
+                reservation.getStoreId(),
+                reservation.getMemberId(),
+                reservation.getName(),
+                reservation.getDate(),
+                reservation.getTime(),
+                reservation.getTheme(),
+                reservation.getStatus()
+        );
     }
 
     public Optional<Reservation> findById(Long id) {
